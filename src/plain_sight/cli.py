@@ -17,6 +17,7 @@ import argparse
 import json
 import logging
 import sys
+import time
 
 from plain_sight import __version__
 from plain_sight.engine import (
@@ -51,13 +52,30 @@ class _Parser(argparse.ArgumentParser):
 
     def error(self, message):
         self.print_usage(sys.stderr)
-        self.exit(1, f"plain-sight: [USAGE] {message}\n")
+        self.exit(
+            1,
+            "plain-sight: [USAGE] "
+            f"{message} -- try 'plain-sight --help' "
+            "(commands: describe, ocr, batch, status, selftest)\n",
+        )
+
+
+_DETAIL_HELP = "Detail tier: low (one sentence), medium (a few sentences), high (full paragraph, default)"
+_TOKENS_HELP = "Generation length cap (default 1024, max 4096)"
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = _Parser(
         prog="plain-sight",
-        description="An AI says what it sees — Florence-2 image describer (local, MIT).",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="An AI says what it sees - Florence-2 image describer (local, MIT).",
+        epilog=(
+            "Exit codes: 0 ok, 1 user error, 2 runtime error, "
+            "3 partial success (batch).\n"
+            "Progress goes to stderr; results go to stdout.\n"
+            "First invocation loads Florence-2 (~10s on GPU; "
+            "first-ever run downloads ~1.5 GB)."
+        ),
     )
     parser.add_argument("--version", action="version", version=f"plain-sight {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -65,35 +83,46 @@ def build_parser() -> argparse.ArgumentParser:
     p_desc = sub.add_parser("describe", help="Describe one image in prose")
     p_desc.add_argument("image", help="Path to the image file")
     p_desc.add_argument("--detail", choices=sorted(DETAIL_TASKS), default="high",
-                        help="Detail tier (default: high — full paragraph)")
+                        help=_DETAIL_HELP)
     p_desc.add_argument("--max-new-tokens", type=int, default=None,
-                        help="Generation length cap (default 1024, max 4096)")
+                        help=_TOKENS_HELP)
     p_desc.add_argument("--json", action="store_true", help="Emit JSON instead of plain text")
 
     p_ocr = sub.add_parser("ocr", help="Extract visible text from one image")
     p_ocr.add_argument("image", help="Path to the image file")
-    p_ocr.add_argument("--max-new-tokens", type=int, default=None)
+    p_ocr.add_argument("--max-new-tokens", type=int, default=None, help=_TOKENS_HELP)
     p_ocr.add_argument("--json", action="store_true", help="Emit JSON instead of plain text")
 
     p_batch = sub.add_parser(
         "batch",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         help="Caption files/directories into .txt sidecars (exact basename pairing)",
+        epilog=(
+            "Existing .txt sidecars are skipped unless --overwrite. "
+            "A dataset-scale run takes hours (~1-2s per image after load)."
+        ),
     )
     p_batch.add_argument("paths", nargs="+", help="Image files and/or directories")
-    p_batch.add_argument("--detail", choices=sorted(DETAIL_TASKS), default="high")
+    p_batch.add_argument("--detail", choices=sorted(DETAIL_TASKS), default="high",
+                         help=_DETAIL_HELP)
     p_batch.add_argument("--prefix", default="",
-                         help="Prepended to every caption, bare concatenation — "
+                         help="Prepended to every caption, bare concatenation -- "
                               "include your own separator (e.g. 'mcpt_style, ')")
     p_batch.add_argument("--suffix", default="", help="Appended to every caption")
     p_batch.add_argument("--out-dir", default=None,
                          help="Directory for sidecars (default: next to each image)")
     p_batch.add_argument("--overwrite", action="store_true",
                          help="Re-caption images whose sidecar already exists")
-    p_batch.add_argument("--max-new-tokens", type=int, default=None)
+    p_batch.add_argument("--max-new-tokens", type=int, default=None, help=_TOKENS_HELP)
     p_batch.add_argument(
         "--manifest",
         default=None,
         help="Write a JSON provenance record at this exact path (opt-in; never inferred)",
+    )
+    p_batch.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the plan (counts, skip, prefix, model) and exit; load nothing, write nothing",
     )
 
     sub.add_parser("status", help="Show engine status (does not load the model)")
@@ -102,7 +131,58 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _announce_load(engine: Florence2Engine, *, n_caption: int | None = None, n_skip: int | None = None) -> None:
+    """Default-verbosity stderr: the tool is alive and may pause on first caption."""
+    rev = engine.revision or "unpinned"
+    extra = ""
+    if n_caption is not None:
+        extra = f"  caption={n_caption} skip={n_skip or 0}"
+    print(
+        f"plain-sight: loading {engine.model_id} rev={rev}{extra}  "
+        f"(first caption includes model load, ~10s; first-ever run downloads ~1.5 GB)",
+        file=sys.stderr,
+        flush=True,
+    )
+
+
+def _fmt_eta(seconds: float) -> str:
+    if seconds <= 0 or seconds != seconds or seconds == float("inf"):
+        return "?"
+    secs = int(seconds)
+    if secs < 60:
+        return f"{secs}s"
+    mins, secs = divmod(secs, 60)
+    if mins < 60:
+        return f"{mins}m {secs:02d}s"
+    hours, mins = divmod(mins, 60)
+    return f"{hours}h {mins:02d}m"
+
+
+def _heartbeat(i: int, total: int, written: int, skipped: int, failed: int, elapsed: float, n_caption: int) -> None:
+    rate = written / elapsed if elapsed > 0 else 0.0
+    work_left = max(n_caption - written - failed, 0)
+    eta = _fmt_eta(work_left / rate) if rate > 0 else "?"
+    print(
+        f"[heartbeat] {i}/{total} written={written} skipped={skipped} "
+        f"failed={failed}  {rate:.1f} img/s  ETA {eta}",
+        file=sys.stderr,
+        flush=True,
+    )
+
+
+def _plan_counts(images, out_dir, overwrite: bool) -> tuple[int, int]:
+    to_write = to_skip = 0
+    for image in images:
+        sidecar = sidecar_path_for(image, out_dir)
+        if sidecar_is_complete(sidecar) and not overwrite:
+            to_skip += 1
+        else:
+            to_write += 1
+    return to_write, to_skip
+
+
 def _cmd_describe(args: argparse.Namespace, engine: Florence2Engine) -> int:
+    _announce_load(engine)
     text = engine.describe(args.image, detail=args.detail, max_new_tokens=args.max_new_tokens)
     if args.json:
         print(json.dumps({
@@ -118,6 +198,7 @@ def _cmd_describe(args: argparse.Namespace, engine: Florence2Engine) -> int:
 
 
 def _cmd_ocr(args: argparse.Namespace, engine: Florence2Engine) -> int:
+    _announce_load(engine)
     text = engine.ocr(args.image, max_new_tokens=args.max_new_tokens)
     if args.json:
         print(json.dumps({"text": text, "model_id": engine.model_id, "image": args.image}, indent=2))
@@ -161,46 +242,74 @@ def _cmd_batch(args: argparse.Namespace, engine: Florence2Engine) -> int:
             )
             return 1
 
+    to_write, to_skip = _plan_counts(images, out_dir, args.overwrite)
+
+    if args.dry_run:
+        print(json.dumps({
+            "dry_run": True,
+            "model_id": engine.model_id,
+            "revision": engine.revision,
+            "prefix": args.prefix,
+            "suffix": args.suffix,
+            "out_dir": str(out_dir) if out_dir else None,
+            "detail": args.detail,
+            "total": len(images),
+            "would_write": to_write,
+            "would_skip": to_skip,
+            "collisions": 0,
+        }, indent=2))
+        return 0
+
     if out_dir is not None:
         out_dir.mkdir(parents=True, exist_ok=True)
+
+    if to_write:
+        _announce_load(engine, n_caption=to_write, n_skip=to_skip)
 
     total = len(images)
     written = skipped = failed = 0
     image_entries: list[dict] = []
+    t0 = time.perf_counter()
+    last_beat_t = t0
+    last_beat_i = 0
     for i, image in enumerate(images, 1):
         sidecar = sidecar_path_for(image, out_dir)
         if sidecar_is_complete(sidecar) and not args.overwrite:
             skipped += 1
-            print(f"[{i}/{total}] skip (exists) {sidecar.name}", file=sys.stderr)
             image_entries.append({
                 "image": str(image),
                 "sidecar": str(sidecar),
                 "status": "skipped_existing",
             })
-            continue
-        try:
-            caption = engine.describe(
-                str(image), detail=args.detail, max_new_tokens=args.max_new_tokens
-            )
-            write_sidecar_atomic(
-                sidecar, compose_caption(args.prefix, caption, args.suffix)
-            )
-            written += 1
-            print(f"[{i}/{total}] wrote {sidecar.name}", file=sys.stderr)
-            image_entries.append({
-                "image": str(image),
-                "sidecar": str(sidecar),
-                "status": "written",
-            })
-        except Exception as exc:
-            failed += 1
-            logger.debug("batch item failed", exc_info=exc)
-            print(f"[{i}/{total}] FAILED {image.name}: {exc}", file=sys.stderr)
-            image_entries.append({
-                "image": str(image),
-                "sidecar": str(sidecar),
-                "status": "failed",
-            })
+        else:
+            try:
+                caption = engine.describe(
+                    str(image), detail=args.detail, max_new_tokens=args.max_new_tokens
+                )
+                write_sidecar_atomic(
+                    sidecar, compose_caption(args.prefix, caption, args.suffix)
+                )
+                written += 1
+                print(f"[{i}/{total}] wrote {sidecar.name}", file=sys.stderr)
+                image_entries.append({
+                    "image": str(image),
+                    "sidecar": str(sidecar),
+                    "status": "written",
+                })
+            except Exception as exc:
+                failed += 1
+                logger.debug("batch item failed", exc_info=exc)
+                print(f"[{i}/{total}] FAILED {image.name}: {exc}", file=sys.stderr)
+                image_entries.append({
+                    "image": str(image),
+                    "sidecar": str(sidecar),
+                    "status": "failed",
+                })
+        now = time.perf_counter()
+        if (i - last_beat_i) >= 25 or (now - last_beat_t) >= 30 or i == total:
+            _heartbeat(i, total, written, skipped, failed, now - t0, to_write)
+            last_beat_t = now
+            last_beat_i = i
 
     if manifest_path is not None:
         info = engine.status()

@@ -13,6 +13,9 @@ These functions define the caption-file conventions plain-sight guarantees:
 Kept free of torch/PIL imports so the contract is testable without a model.
 """
 
+import json
+import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 # Extensions treated as images when expanding directories.
@@ -35,6 +38,64 @@ def sidecar_path_for(image_path: str | Path, out_dir: str | Path | None = None) 
     if out_dir is not None:
         return Path(out_dir) / name
     return image.with_name(name)
+
+
+def sidecar_is_complete(path: str | Path) -> bool:
+    """True only when the sidecar exists and has at least one byte.
+
+    Empty files are leftover from a failed write, not finished captions.
+    """
+    p = Path(path)
+    try:
+        return p.is_file() and p.stat().st_size > 0
+    except OSError:
+        return False
+
+
+def write_sidecar_atomic(path: str | Path, text: str) -> None:
+    """Write ``text`` to ``path`` via a same-directory temp + ``os.replace``.
+
+    The final path is never a partial file: interrupt or OSError during the
+    temp write leaves the destination untouched and the temp discarded.
+    """
+    dest = Path(path)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    tmp = dest.with_name(dest.name + ".tmp")
+    try:
+        tmp.write_text(text, encoding="utf-8")
+        os.replace(tmp, dest)
+    except BaseException:
+        try:
+            tmp.unlink(missing_ok=True)
+        except OSError:
+            pass
+        raise
+
+
+def manifest_collides_with_sidecars(
+    manifest_path: str | Path,
+    images: list[str | Path],
+    out_dir: str | Path | None = None,
+) -> Path | None:
+    """Return the sidecar path that equals ``manifest_path``, else None."""
+    target = Path(manifest_path).resolve()
+    for raw in images:
+        sidecar = sidecar_path_for(raw, out_dir).resolve()
+        if sidecar == target:
+            return sidecar
+    return None
+
+
+def write_batch_manifest(path: str | Path, payload: dict) -> None:
+    """Write a JSON provenance record atomically. Not a ``.txt`` sidecar.
+
+    Injects ``created_at`` (UTC ISO-8601) if the caller omitted it. That
+    timestamp means two runs of the same batch are not byte-identical —
+    the captions are; the provenance record is not.
+    """
+    body = dict(payload)
+    body.setdefault("created_at", datetime.now(timezone.utc).isoformat())
+    write_sidecar_atomic(path, json.dumps(body, indent=2, default=str) + "\n")
 
 
 def find_sidecar_collisions(

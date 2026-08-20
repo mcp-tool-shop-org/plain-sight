@@ -7,8 +7,10 @@ plain-sight CLI — the dataset-captioning lane from a shell.
     plain-sight status
     plain-sight selftest
 
-Exit codes: 0 success · 1 any item failed · 2 usage error (argparse).
-Errors print one structured line to stderr: ``plain-sight: [CODE] message — hint``.
+Exit codes: 0 ok · 1 user error (bad input, bad usage) · 2 runtime error
+(model/internal failure, failed selftest) · 3 partial success (batch with
+some failures). Errors print one structured line to stderr:
+``plain-sight: [CODE] message — hint``.
 """
 
 import argparse
@@ -24,8 +26,19 @@ def _err(code: str, message: str, hint: str) -> None:
     print(f"plain-sight: [{code}] {message} — {hint}", file=sys.stderr)
 
 
+class _Parser(argparse.ArgumentParser):
+    """Usage errors are USER errors — exit 1 per the studio exit-code canon
+    (0 ok · 1 user error · 2 runtime error · 3 partial success). argparse's
+    native usage-exit of 2 would collide with 'runtime error'.
+    """
+
+    def error(self, message):
+        self.print_usage(sys.stderr)
+        self.exit(1, f"plain-sight: [USAGE] {message}\n")
+
+
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
+    parser = _Parser(
         prog="plain-sight",
         description="An AI says what it sees — Florence-2 image describer (local, MIT).",
     )
@@ -133,7 +146,9 @@ def _cmd_batch(args: argparse.Namespace, engine: Florence2Engine) -> int:
         "detail": args.detail,
         "out_dir": str(out_dir) if out_dir else None,
     }, indent=2))
-    return 0 if failed == 0 else 1
+    if failed == 0:
+        return 0
+    return 1 if written == 0 else 3  # all failed = user error; some = partial success
 
 
 def _cmd_status(engine: Florence2Engine) -> int:
@@ -144,7 +159,7 @@ def _cmd_status(engine: Florence2Engine) -> int:
 def _cmd_selftest(engine: Florence2Engine) -> int:
     result = engine.selftest()
     print(json.dumps(result, indent=2))
-    return 0 if result["passed"] else 1
+    return 0 if result["passed"] else 2  # a failing instrument is a runtime error
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -175,7 +190,7 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as exc:  # noqa: BLE001 — CLI boundary: no raw stacks
         _err("INTERNAL", f"{exc.__class__.__name__}: {exc}",
              "set PLAIN_SIGHT_LOG_LEVEL=DEBUG for details; try PLAIN_SIGHT_DEVICE=cpu")
-        code = 1
+        code = 2
     return code
 
 

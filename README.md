@@ -1,6 +1,6 @@
 # plain-sight
 
-**Version:** 0.1.0
+**Version:** 1.0.0
 
 **An AI says what it sees.** Generative image describer — MCP server + CLI wrapping
 Florence-2 (MIT) for prose descriptions, OCR, and LoRA-dataset caption sidecars.
@@ -143,6 +143,26 @@ calls are ~1–2s per image at `high` detail on a modern GPU.
 - **No remote code:** the engine uses transformers' *native* Florence-2
   support only — `trust_remote_code` is never passed, so no hub-fetched
   Python ever executes. This requires `transformers >= 4.51`.
+
+## Security and Trust
+
+This tool operates **locally only**.
+
+- **Data touched:** local image files (read-only); the HuggingFace model cache
+  (written once on first download); `.txt` caption sidecars — the ONLY files
+  it writes, only where the caller asked (`out_dir` or next to the image),
+  and existing sidecars are only replaced under explicit `--overwrite`.
+- **No network egress at runtime** — the model downloads once on first use,
+  then all inference is local.
+- **No remote code execution** — native transformers classes only;
+  `trust_remote_code` is never passed, so no hub-fetched Python ever executes.
+- **No secrets handling, no telemetry** — nothing is read from or sent anywhere.
+- **Structured errors only** — raw stack traces never reach MCP clients or
+  CLI users. CLI exit codes: 0 ok · 1 user error · 2 runtime error ·
+  3 partial success.
+
+Full policy: [SECURITY.md](SECURITY.md). Actively maintained; supported
+versions listed there.
 
 ## Requirements
 

@@ -1,5 +1,26 @@
 # Security
 
+## Supported Versions
+
+| Version | Supported |
+|---------|-----------|
+| 1.0.x   | Yes       |
+
+## Reporting a Vulnerability
+
+Email: **64996768+mcp-tool-shop@users.noreply.github.com** or open an issue at
+https://github.com/mcp-tool-shop-org/plain-sight/issues.
+
+Include: description, steps to reproduce, version affected, potential impact.
+
+### Response timeline
+
+| Action | Target |
+|--------|--------|
+| Acknowledge report | 48 hours |
+| Assess severity | 7 days |
+| Release fix | 30 days |
+
 ## Threat model
 
 plain-sight operates **locally only**.
@@ -22,8 +43,3 @@ plain-sight operates **locally only**.
 - **Structured errors only** — raw stack traces are never exposed to MCP
   clients or CLI users (set `PLAIN_SIGHT_LOG_LEVEL=DEBUG` server-side for
   tracebacks).
-
-## Reporting
-
-Open an issue at https://github.com/mcp-tool-shop-org/plain-sight/issues or
-email 64996768+mcp-tool-shop@users.noreply.github.com.

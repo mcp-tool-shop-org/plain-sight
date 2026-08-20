@@ -29,7 +29,7 @@ echo "== 3/4 CI-safe tests =="
 python -m pytest tests/test_edge_cases.py -q --basetemp .pytest-tmp
 
 echo "== 4/4 build =="
-python -m build --wheel >/dev/null
-echo "wheel built OK"
+python -m build >/dev/null
+echo "wheel + sdist built OK"
 
 echo "VERIFY PASSED"

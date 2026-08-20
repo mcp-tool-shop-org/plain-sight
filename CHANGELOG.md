@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.0.0 — 2026-08-20
+
+Shipcheck promotion (v0.x → v1.0.0 per org policy). The describe/OCR/sidecar
+contract is unchanged.
+
+- CLI exit codes aligned to the studio canon: 0 ok · 1 user error (bad input
+  AND bad usage — argparse's native usage-exit of 2 is overridden) ·
+  2 runtime error (internal failure, failing selftest) · 3 partial success
+  (batch with some failures).
+- CI added: paths-gated ubuntu workflow — imports, MCP tool-surface check,
+  CI-safe edge tests, `pip-audit` (advisory).
+- SECURITY.md: supported-versions table + response timeline.
+- README: "Security and Trust" threat-model section.
+- `verify.sh` now builds wheel + sdist (clean-build gate).
+- SHIP_GATE.md added; hard gates A–D pass.
+
 ## 0.1.0 — 2026-08-19
 
 Initial build.

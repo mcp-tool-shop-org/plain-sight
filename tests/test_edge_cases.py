@@ -176,15 +176,17 @@ class TestCliParser:
         assert args.overwrite is True
         assert args.detail == "low"
 
-    def test_invalid_detail_exits_2(self):
+    def test_invalid_detail_is_user_error_exit_1(self):
+        # Studio exit-code canon: usage errors are USER errors (1), not
+        # argparse's native 2 (which the canon reserves for runtime errors).
         with pytest.raises(SystemExit) as exc:
             build_parser().parse_args(["describe", "img.png", "--detail", "ultra"])
-        assert exc.value.code == 2
+        assert exc.value.code == 1
 
-    def test_missing_command_exits_2(self):
+    def test_missing_command_is_user_error_exit_1(self):
         with pytest.raises(SystemExit) as exc:
             build_parser().parse_args([])
-        assert exc.value.code == 2
+        assert exc.value.code == 1
 
     def test_ocr_and_utility_commands_parse(self):
         assert build_parser().parse_args(["ocr", "x.png"]).command == "ocr"

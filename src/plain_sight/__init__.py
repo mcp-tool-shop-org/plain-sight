@@ -1,3 +1,3 @@
 """plain-sight — an AI says what it sees."""
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"

@@ -930,10 +930,9 @@ class TestP902RevisionOnPayloads:
         img = tmp_path / "a.png"
         img.write_bytes(b"stub")
 
-        def fake_prov(self):
-            return {"model_id": "test/id", "revision_resolved": "abc123"}
-
-        monkeypatch.setattr(Florence2Engine, "output_provenance", fake_prov)
+        # Stub the model-dependent dependency, NOT output_provenance itself --
+        # the real output_provenance must run or this gate cannot see its keys.
+        monkeypatch.setattr(Florence2Engine, "resolved_revision", lambda self: "abc123")
         monkeypatch.setattr(Florence2Engine, "describe", lambda self, *a, **k: "caption")
         monkeypatch.setattr(Florence2Engine, "ocr", lambda self, *a, **k: "2")
         monkeypatch.setattr(Florence2Engine, "_ensure_loaded", lambda self: None)
@@ -951,10 +950,16 @@ class TestP902RevisionOnPayloads:
         assert batch["revision_resolved"] == "abc123"
 
         import plain_sight.server as server_mod
+
+        # Patched separately: earlier tests importlib.reload plain_sight.engine
+        # and plain_sight.server, so type(server_mod.engine) is not always the
+        # same class object as the Florence2Engine imported at module top.
+        monkeypatch.setattr(
+            type(server_mod.engine), "resolved_revision", lambda self: "abc123"
+        )
         monkeypatch.setattr(server_mod.engine, "_ensure_loaded", lambda: None)
         monkeypatch.setattr(server_mod.engine, "describe", lambda *a, **k: "caption")
         monkeypatch.setattr(server_mod.engine, "ocr", lambda *a, **k: "2")
-        monkeypatch.setattr(server_mod.engine, "output_provenance", lambda: fake_prov(server_mod.engine))
 
         d = server_mod.describe_image(str(img))
         assert d["revision_resolved"] == "abc123"

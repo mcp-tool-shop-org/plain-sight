@@ -188,12 +188,14 @@ def describe_batch(
     max_new_tokens: Annotated[int | None, Field(description="Generation length cap (default 1024, max 4096)")] = None,
     manifest_path: Annotated[str | None, Field(description="Optional explicit JSON provenance path. Default none — no manifest is written. Refused if it collides with a sidecar.")] = None,
 ) -> dict:
-    """Caption a batch of images, writing .txt sidecars — the dataset lane.
+    """Blocks until every image completes -- roughly 1-2 s per image plus
+    ~10-20 s if the model is not yet loaded. Chunk large sets. Existing
+    sidecars are skipped unless overwrite=true, so a retry is cheap.
 
-    The training-data contract: EXACT basename pairing (img_0042.png →
+    Caption a batch of images, writing .txt sidecars -- the dataset lane.
+    The training-data contract: EXACT basename pairing (img_0042.png ->
     img_0042.txt, no counter suffix) and BARE prefix+caption+suffix
-    concatenation (no delimiter injected). Existing sidecars are skipped
-    unless overwrite=true, so re-runs only pay for new images.
+    concatenation (no delimiter injected).
     """
     if not image_paths:
         raise ToolError("At least one image path is required")

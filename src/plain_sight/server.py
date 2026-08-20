@@ -32,10 +32,19 @@ from plain_sight.engine import (
     DEFAULT_CACHE_DIR,
     DEFAULT_DEVICE,
     DEFAULT_DTYPE,
+    DEFAULT_MAX_NEW_TOKENS,
     DETAIL_TASKS,
     configure_logging,
 )
-from plain_sight.sidecars import compose_caption, find_sidecar_collisions, sidecar_path_for
+from plain_sight.sidecars import (
+    compose_caption,
+    find_sidecar_collisions,
+    manifest_collides_with_sidecars,
+    sidecar_is_complete,
+    sidecar_path_for,
+    write_batch_manifest,
+    write_sidecar_atomic,
+)
 
 logger = logging.getLogger("plain_sight")
 
@@ -44,9 +53,10 @@ logger = logging.getLogger("plain_sight")
 configure_logging()
 
 # ---------------------------------------------------------------------------
-# Server + engine setup — module level deliberately: for an MCP server the
-# module IS the server process; lazy construction would just defer the same
-# work to the first tool call with no benefit.
+# Server + engine setup — constructed at import so sight_status can report
+# identity without loading weights. eager_load is forced off: an unresolvable
+# MODEL_ID must not kill `import plain_sight.server` (B-01). Load failures
+# belong to _ensure_model() → ToolError. sight_status still does not load.
 # ---------------------------------------------------------------------------
 
 mcp = FastMCP(name="plain-sight")
@@ -57,6 +67,7 @@ engine = Florence2Engine(
     cache_dir=DEFAULT_CACHE_DIR,
     device=DEFAULT_DEVICE,
     dtype=DEFAULT_DTYPE,
+    eager_load=False,
 )
 
 _HONESTY_GUIDANCE = (
@@ -154,6 +165,7 @@ def describe_batch(
     out_dir: Annotated[str | None, Field(description="Directory for sidecar files (created if missing). Default: next to each image")] = None,
     overwrite: Annotated[bool, Field(description="Re-caption images whose sidecar already exists (default false: skip them, so re-runs are idempotent and cheap)")] = False,
     max_new_tokens: Annotated[int | None, Field(description="Generation length cap (default 1024, max 4096)")] = None,
+    manifest_path: Annotated[str | None, Field(description="Optional explicit JSON provenance path. Default none — no manifest is written. Refused if it collides with a sidecar.")] = None,
 ) -> dict:
     """Caption a batch of images, writing .txt sidecars — the dataset lane.
 
@@ -176,12 +188,12 @@ def describe_batch(
     out_dir_path: Path | None = None
     if out_dir is not None:
         out_dir_path = Path(out_dir).resolve()
-        out_dir_path.mkdir(parents=True, exist_ok=True)
 
     resolved = [str(Path(p).resolve()) for p in image_paths]
     results: list[dict] = []
     errors: list[dict] = []
     skipped = 0
+    image_entries: list[dict] = []
 
     if write_sidecars:
         collisions = find_sidecar_collisions(resolved, out_dir_path)
@@ -198,33 +210,85 @@ def describe_batch(
                 lines.append(f"  {sidecar}  <-  {names}")
             raise ToolError("\n".join(lines))
 
+    manifest: Path | None = Path(manifest_path).resolve() if manifest_path else None
+    if manifest is not None:
+        hit = manifest_collides_with_sidecars(manifest, resolved, out_dir_path)
+        if hit is not None:
+            raise ToolError(
+                f"Manifest path collides with sidecar {hit} — pick a .json path "
+                "that is not a caption sidecar."
+            )
+
+    if out_dir_path is not None:
+        out_dir_path.mkdir(parents=True, exist_ok=True)
+
     _ensure_model()
     for path in resolved:
         sidecar = sidecar_path_for(path, out_dir_path) if write_sidecars else None
-        if sidecar is not None and sidecar.exists() and not overwrite:
+        if sidecar is not None and sidecar_is_complete(sidecar) and not overwrite:
             skipped += 1
             results.append({"path": path, "sidecar": str(sidecar), "skipped_existing": True})
+            image_entries.append({"image": path, "sidecar": str(sidecar), "status": "skipped_existing"})
             continue
         try:
             caption = engine.describe(path, detail=detail, max_new_tokens=max_new_tokens)
             text = compose_caption(prefix, caption, suffix)
             item: dict = {"path": path}
             if sidecar is not None:
-                sidecar.write_text(text, encoding="utf-8")
+                write_sidecar_atomic(sidecar, text)
                 item["sidecar"] = str(sidecar)
                 item["chars"] = len(text)
                 item["preview"] = text if len(text) <= 80 else text[:79] + "…"
             else:
                 item["caption"] = text
             results.append(item)
+            image_entries.append({
+                "image": path,
+                "sidecar": str(sidecar) if sidecar is not None else None,
+                "status": "written",
+            })
         except FileNotFoundError:
             errors.append({"path": path, "error": "not found"})
+            image_entries.append({"image": path, "sidecar": str(sidecar) if sidecar else None, "status": "failed"})
         except ValueError as e:
             logger.debug("batch item failed (invalid input): %s", e)
             errors.append({"path": path, "error": "invalid image"})
+            image_entries.append({"image": path, "sidecar": str(sidecar) if sidecar else None, "status": "failed"})
+        except OSError as e:
+            logger.debug("batch item failed (write/IO): %s", e)
+            detail_msg = e.strerror or str(e)
+            errors.append({
+                "path": path,
+                "error": f"sidecar write failed (disk/IO): {detail_msg}",
+            })
+            image_entries.append({"image": path, "sidecar": str(sidecar) if sidecar else None, "status": "failed"})
         except Exception as e:
             logger.debug("batch item failed: %s", e)
             errors.append({"path": path, "error": "description failed"})
+            image_entries.append({"image": path, "sidecar": str(sidecar) if sidecar else None, "status": "failed"})
+
+    if manifest is not None:
+        info = engine.status()
+        write_batch_manifest(manifest, {
+            "plain_sight_version": info["plain_sight_version"],
+            "torch_version": info["torch_version"],
+            "transformers_version": info["transformers_version"],
+            "model_id": info["model_id"],
+            "revision_requested": info["revision_requested"],
+            "revision_resolved": info["revision_resolved"],
+            "device": info["device"],
+            "dtype": info["dtype"],
+            "num_beams": info["num_beams"],
+            "detail": detail,
+            "max_new_tokens": max_new_tokens if max_new_tokens is not None else DEFAULT_MAX_NEW_TOKENS,
+            "prefix": prefix,
+            "suffix": suffix,
+            "total": len(resolved),
+            "written": len(results) - skipped,
+            "skipped_existing": skipped,
+            "failed": len(errors),
+            "images": image_entries,
+        })
 
     elapsed = round((time.perf_counter() - t0) * 1000)
     logger.debug("describe_batch completed in %.3fs", elapsed / 1000)
@@ -236,6 +300,7 @@ def describe_batch(
         "detail": detail,
         "write_sidecars": write_sidecars,
         "out_dir": str(out_dir_path) if out_dir_path else None,
+        "manifest": str(manifest) if manifest else None,
         "results": results,
         "error_details": errors if errors else None,
         "elapsed_ms": elapsed,

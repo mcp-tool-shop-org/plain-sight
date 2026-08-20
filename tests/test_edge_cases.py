@@ -327,6 +327,8 @@ class TestSidecarCollisions:
         captured = capsys.readouterr()
         assert code == 1
         assert "SIDECAR_COLLISION" in captured.err
+        first = captured.err.splitlines()[0]
+        first.encode("ascii")  # H-02: would have caught the em-dash in the hint
         assert "img.png" in captured.err
         assert "img.jpg" in captured.err
         assert list(tmp_path.glob("*.txt")) == []
@@ -395,25 +397,96 @@ class TestEngineCtorInsideErrorBoundary:
         assert "Traceback" not in captured.err
 
     def test_mcp_import_survives_eager_bad_id(self, monkeypatch):
+        def boom(self):
+            raise OSError("repo not found")
+
         monkeypatch.setenv("PLAIN_SIGHT_EAGER_LOAD", "1")
         monkeypatch.setenv("PLAIN_SIGHT_MODEL_ID", "definitely-not/a-real-model")
+        monkeypatch.setattr(
+            "plain_sight.engine.Florence2Engine._ensure_loaded", boom
+        )
         import plain_sight.server as server_mod
         importlib.reload(server_mod)
         try:
             assert server_mod.engine is not None
             assert server_mod.engine.loaded is False
-
-            def boom():
-                raise OSError("repo not found")
-
-            monkeypatch.setattr(server_mod.engine, "_ensure_loaded", boom)
             from fastmcp.exceptions import ToolError
 
-            with pytest.raises(ToolError, match="Model not loaded"):
+            status = server_mod.sight_status()
+            assert status["loaded"] is False
+            assert status.get("eager_load_attempted") is True
+            assert "repo not found" in status["eager_load_error"]
+            with pytest.raises(ToolError, match="repo not found"):
                 server_mod._ensure_model()
+            # status must not have triggered a retry/load
+            assert server_mod.engine.loaded is False
         finally:
             monkeypatch.delenv("PLAIN_SIGHT_EAGER_LOAD", raising=False)
             monkeypatch.delenv("PLAIN_SIGHT_MODEL_ID", raising=False)
+            importlib.reload(server_mod)
+
+
+class TestMcpEagerLoadEnv:
+    """H-01: PLAIN_SIGHT_EAGER_LOAD is honoured on MCP without killing import.
+
+    Would have caught: server.py hardcoding eager_load=False with no follow-up
+    load, so the documented env var was dead.
+    """
+
+    def test_eager_true_loads_at_import(self, monkeypatch):
+        calls = {"n": 0}
+
+        def fake_load(self):
+            calls["n"] += 1
+
+            class Dummy:
+                config = object()
+
+                def parameters(self):
+                    return []
+
+            self._model = Dummy()
+            self._processor = object()
+
+        monkeypatch.setenv("PLAIN_SIGHT_EAGER_LOAD", "1")
+        monkeypatch.setattr(
+            "plain_sight.engine.Florence2Engine._ensure_loaded", fake_load
+        )
+        import plain_sight.server as server_mod
+        importlib.reload(server_mod)
+        try:
+            assert server_mod.engine.loaded is True
+            assert calls["n"] == 1
+            before = calls["n"]
+            status = server_mod.sight_status()
+            assert status["loaded"] is True
+            assert calls["n"] == before  # status never loads
+        finally:
+            monkeypatch.delenv("PLAIN_SIGHT_EAGER_LOAD", raising=False)
+            importlib.reload(server_mod)
+
+    def test_eager_unset_does_not_load(self, monkeypatch):
+        calls = {"n": 0}
+
+        def fake_load(self):
+            calls["n"] += 1
+            self._model = object()
+            self._processor = object()
+
+        monkeypatch.delenv("PLAIN_SIGHT_EAGER_LOAD", raising=False)
+        monkeypatch.setattr(
+            "plain_sight.engine.Florence2Engine._ensure_loaded", fake_load
+        )
+        import plain_sight.server as server_mod
+        importlib.reload(server_mod)
+        try:
+            assert server_mod.engine.loaded is False
+            assert calls["n"] == 0
+            status = server_mod.sight_status()
+            assert status["loaded"] is False
+            assert "PLAIN_SIGHT_EAGER_LOAD=1" in status["note"]
+            assert calls["n"] == 0
+        finally:
             importlib.reload(server_mod)
 
 
@@ -637,7 +710,16 @@ class TestVerifyShMarker:
     def test_verify_sh_uses_not_dogfood_marker(self):
         text = open("verify.sh", encoding="utf-8").read()
         assert '-m "not dogfood"' in text
-        assert "tests/test_edge_cases.py" not in text.split("== 3/4")[1]
+        step3 = text.split("== 3/4")[1]
+        assert "tests/test_edge_cases.py" not in step3
+        assert "PYTEST_DEBUG_TEMPROOT" in step3
+        pytest_lines = [
+            line for line in step3.splitlines()
+            if "pytest" in line and not line.strip().startswith("#")
+        ]
+        assert pytest_lines and all("--basetemp" not in line for line in pytest_lines)
+        gitignore = open(".gitignore", encoding="utf-8").read()
+        assert ".pytest-temproot/" in gitignore
 
 
 class TestErrAsciiSeparator:
@@ -652,3 +734,8 @@ class TestErrAsciiSeparator:
         assert " — " not in line
         assert " -- " in line
         assert line.encode("ascii")  # must not raise
+
+    def test_unknown_detail_message_is_ascii(self):
+        with pytest.raises(ValueError) as exc:
+            Florence2Engine._validate_detail("ultra")
+        str(exc.value).encode("ascii")

@@ -19,19 +19,28 @@ import logging
 import sys
 
 from plain_sight import __version__
-from plain_sight.engine import Florence2Engine, DETAIL_TASKS, configure_logging
+from plain_sight.engine import (
+    Florence2Engine,
+    DETAIL_TASKS,
+    DEFAULT_MAX_NEW_TOKENS,
+    configure_logging,
+)
 from plain_sight.sidecars import (
     compose_caption,
     find_sidecar_collisions,
     iter_image_files,
+    manifest_collides_with_sidecars,
+    sidecar_is_complete,
     sidecar_path_for,
+    write_batch_manifest,
+    write_sidecar_atomic,
 )
 
 logger = logging.getLogger("plain_sight")
 
 
 def _err(code: str, message: str, hint: str) -> None:
-    print(f"plain-sight: [{code}] {message} — {hint}", file=sys.stderr)
+    print(f"plain-sight: [{code}] {message} -- {hint}", file=sys.stderr)
 
 
 class _Parser(argparse.ArgumentParser):
@@ -81,6 +90,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_batch.add_argument("--overwrite", action="store_true",
                          help="Re-caption images whose sidecar already exists")
     p_batch.add_argument("--max-new-tokens", type=int, default=None)
+    p_batch.add_argument(
+        "--manifest",
+        default=None,
+        help="Write a JSON provenance record at this exact path (opt-in; never inferred)",
+    )
 
     sub.add_parser("status", help="Show engine status (does not load the model)")
     sub.add_parser("selftest", help="Describe bundled reference images and sanity-check output")
@@ -136,30 +150,80 @@ def _cmd_batch(args: argparse.Namespace, engine: Florence2Engine) -> int:
             print(f"  {sidecar}  <-  {names}", file=sys.stderr)
         return 1
 
+    manifest_path = Path(args.manifest).resolve() if args.manifest else None
+    if manifest_path is not None:
+        hit = manifest_collides_with_sidecars(manifest_path, images, out_dir)
+        if hit is not None:
+            _err(
+                "MANIFEST_COLLISION",
+                f"manifest path collides with sidecar {hit}",
+                "pick a .json path that is not a caption sidecar",
+            )
+            return 1
+
     if out_dir is not None:
         out_dir.mkdir(parents=True, exist_ok=True)
 
     total = len(images)
     written = skipped = failed = 0
+    image_entries: list[dict] = []
     for i, image in enumerate(images, 1):
         sidecar = sidecar_path_for(image, out_dir)
-        if sidecar.exists() and not args.overwrite:
+        if sidecar_is_complete(sidecar) and not args.overwrite:
             skipped += 1
             print(f"[{i}/{total}] skip (exists) {sidecar.name}", file=sys.stderr)
+            image_entries.append({
+                "image": str(image),
+                "sidecar": str(sidecar),
+                "status": "skipped_existing",
+            })
             continue
         try:
             caption = engine.describe(
                 str(image), detail=args.detail, max_new_tokens=args.max_new_tokens
             )
-            sidecar.write_text(
-                compose_caption(args.prefix, caption, args.suffix), encoding="utf-8"
+            write_sidecar_atomic(
+                sidecar, compose_caption(args.prefix, caption, args.suffix)
             )
             written += 1
             print(f"[{i}/{total}] wrote {sidecar.name}", file=sys.stderr)
+            image_entries.append({
+                "image": str(image),
+                "sidecar": str(sidecar),
+                "status": "written",
+            })
         except Exception as exc:
             failed += 1
             logger.debug("batch item failed", exc_info=exc)
             print(f"[{i}/{total}] FAILED {image.name}: {exc}", file=sys.stderr)
+            image_entries.append({
+                "image": str(image),
+                "sidecar": str(sidecar),
+                "status": "failed",
+            })
+
+    if manifest_path is not None:
+        info = engine.status()
+        write_batch_manifest(manifest_path, {
+            "plain_sight_version": info["plain_sight_version"],
+            "torch_version": info["torch_version"],
+            "transformers_version": info["transformers_version"],
+            "model_id": info["model_id"],
+            "revision_requested": info["revision_requested"],
+            "revision_resolved": info["revision_resolved"],
+            "device": info["device"],
+            "dtype": info["dtype"],
+            "num_beams": info["num_beams"],
+            "detail": args.detail,
+            "max_new_tokens": args.max_new_tokens if args.max_new_tokens is not None else DEFAULT_MAX_NEW_TOKENS,
+            "prefix": args.prefix,
+            "suffix": args.suffix,
+            "total": total,
+            "written": written,
+            "skipped_existing": skipped,
+            "failed": failed,
+            "images": image_entries,
+        })
 
     print(json.dumps({
         "total": total,
@@ -168,6 +232,7 @@ def _cmd_batch(args: argparse.Namespace, engine: Florence2Engine) -> int:
         "failed": failed,
         "detail": args.detail,
         "out_dir": str(out_dir) if out_dir else None,
+        "manifest": str(manifest_path) if manifest_path else None,
     }, indent=2))
     if failed == 0:
         return 0
@@ -188,8 +253,8 @@ def _cmd_selftest(engine: Florence2Engine) -> int:
 def main(argv: list[str] | None = None) -> int:
     configure_logging()
     args = build_parser().parse_args(argv)
-    engine = Florence2Engine()
     try:
+        engine = Florence2Engine()
         if args.command == "describe":
             code = _cmd_describe(args, engine)
         elif args.command == "ocr":
@@ -209,7 +274,11 @@ def main(argv: list[str] | None = None) -> int:
         _err("INVALID_INPUT", str(exc), "see --help for valid values")
         code = 1
     except KeyboardInterrupt:
-        _err("INTERRUPTED", "cancelled by user", "partial sidecars from `batch` are kept")
+        _err(
+            "INTERRUPTED",
+            "cancelled by user",
+            "in-flight sidecar discarded; completed sidecars kept",
+        )
         code = 1
     except Exception as exc:  # noqa: BLE001 — CLI boundary: no raw stacks
         logger.debug("internal error", exc_info=exc)

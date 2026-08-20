@@ -12,7 +12,7 @@
   <a href="https://mcp-tool-shop-org.github.io/plain-sight/"><img src="https://img.shields.io/badge/landing-page-22d3ee.svg" alt="Landing Page"></a>
 </p>
 
-**Versão:** 1.0.0
+**Versão:** 1.1.0
 
 **Uma IA descreve o que vê.** Gerador de descrições de imagens – servidor MCP + interface de linha de comando.
 Florence-2 (licença MIT) para descrições textuais, reconhecimento ótico de caracteres (OCR) e criação de legendas para conjuntos de dados LoRA.
@@ -32,15 +32,23 @@ A versão complementar de [ai-eyes-mcp](https://github.com/mcp-tool-shop-org/ai-
 
 As descrições são **gerativas**: fluentes, geralmente precisas e capazes de inventar detalhes. O recurso «plain-sight» torna a saída *reproduzível* (decodificação determinística — a mesma imagem produz a mesma legenda), mas não garante que seja *verdadeira*. Para verificar uma afirmação específica sobre uma imagem, use o `image_verify` do ai-eyes-mcp; ele mede, em vez de descrever. As duas ferramentas pertencem a famílias de modelos diferentes por design, para que uma possa verificar a outra.
 
+Três limites específicos, mencionados porque é fácil descobrir da pior maneira:
+
+- **O OCR não pode indicar a ausência de texto.** O Florence-2 emite uma string decodificada para cada imagem, incluindo imagens que não contêm nenhum texto — uma fotografia pode retornar `'2'`. Essa saída é lexicalmente indistinguível de uma leitura correta de um numeral. Portanto, cada resultado do OCR carrega `absence_of_text_unreliable: true` (MCP) ou uma linha `[OCR_CAVEAT]` no stderr (CLI). O plain-sight nunca suprime ou esvazia o resultado, porque uma leitura curta pode ser genuína — ele informa que o sinal não existe.
+- **As legendas descrevem; elas não verificam.** Uma frase confiante sobre uma imagem não é evidência de que o objeto descrito está presente.
+- **A reprodutibilidade é por revisão.** Fixar a versão é o que torna a alegação de determinismo significativa ao longo do tempo; veja [Provenance](#provenance).
+
 ## Ferramentas (MCP)
 
 | Ferramenta | Para que serve? / Qual a sua função? |
 |------|-------------|
 | `describe_image` | Uma imagem → descrição em prosa (3 níveis de detalhe) |
 | `describe_batch` | N imagens → `.txt` arquivos de legenda associados (o conjunto de dados) |
-| `read_text` | OCR — extrai o texto visível de uma imagem. |
-| `sight_status` | Verificação de saúde: modelo, dispositivo, estado atual. |
+| `read_text` | OCR — decodifica texto de uma imagem, com uma ressalva sobre a ausência de texto. |
+| `sight_status` | Verificação de saúde: modelo, dispositivo, revisão resolvida, estado carregado. |
 | `sight_selftest` | Descreva as imagens de referência agrupadas e os resultados dos testes de verificação. |
+
+Cada carga útil que carrega a saída do modelo também carrega `model_id` e `revision_resolved` — veja [Provenance](#provenance).
 
 ## Guia de Início Rápido
 
@@ -60,15 +68,36 @@ plain-sight describe hero.png
 # One short sentence
 plain-sight describe hero.png --detail low
 
-# OCR
+# OCR (the absence caveat goes to stderr; the text goes to stdout)
 plain-sight ocr screenshot.png
+
+# See the plan before writing anything — no model load, no files
+plain-sight batch ./dataset --prefix "mcpt_style, " --dry-run
 
 # The dataset lane: caption a directory into .txt sidecars with a trigger token
 plain-sight batch ./dataset --prefix "mcpt_style, " --detail high
 
+# Record provenance for the run alongside it
+plain-sight batch ./dataset --prefix "mcpt_style, " --manifest ./dataset-run.json
+
 # Re-runs are idempotent — existing sidecars are skipped unless you --overwrite
 plain-sight batch ./dataset --prefix "mcpt_style, " --overwrite
 ```
+
+Flags `batch`: `--detail` · `--prefix` · `--suffix` · `--out-dir` · `--overwrite` · `--max-new-tokens` · `--manifest` · `--dry-run`. Execute `plain-sight batch --help` para obter o texto completo; `plain-sight --help` documenta os códigos de saída e qual fluxo carrega o quê.
+
+### Como é uma execução longa
+
+O progresso vai para **stderr**; os resultados vão para **stdout**, então `plain-sight describe x.png > caption.txt` funciona.
+
+```
+plain-sight: loading florence-community/Florence-2-large rev=4271c66b…  caption=4820 skip=0
+  (first caption includes model load, ~10s; first-ever run downloads ~1.5 GB)
+[1/4820] wrote img_0001.txt
+[heartbeat] 1840/4820 written=1801 skipped=32 failed=7  1.4 img/s  ETA 35m
+```
+
+A carga é anunciada **antes** do início do trabalho, com a contagem das imagens que realmente terão legendas, para que uma pausa nunca apareça no meio da execução. As imagens ignoradas são contadas no sinal de atividade (heartbeat) em vez de serem impressas linha por linha — uma nova execução sobre um conjunto concluído é silenciosa. As falhas permanecem em uma linha cada.
 
 ### Configuração do Claude Code
 
@@ -89,10 +118,20 @@ plain-sight batch ./dataset --prefix "mcpt_style, " --overwrite
 
 Criado para conjuntos de dados de treino LoRA (style-dataset-lab e projetos relacionados):
 
-- **Correspondência exata do nome base:** `img_0042.png` → `img_0042.txt`. Sem sufixo de contador — ao contrário do nó SaveText do ComfyUI, que adiciona `_00001`.
-- **Concatenação simples:** o arquivo complementar contém `prefix + caption + suffix` sem nenhum delimitador inserido. Quer `"mcpt_style, <caption>"`? Coloque a vírgula e o espaço no prefixo.
-- **Execuções idempotentes:** os arquivos complementares existentes são ignorados (e não têm custo), a menos que `--overwrite` / `overwrite=true`.
-- **Determinístico:** `do_sample=false` + pesquisa em feixe — ao reatribuir legendas a uma imagem inalterada, o mesmo texto é reproduzido, portanto, as diferenças significam algo.
+- **Correspondência exata do nome base:** `img_0042.png` → `img_0042.txt`. Sem sufixo de contador — diferente do nó SaveText do ComfyUI, que adiciona `_00001`.
+- **Concatenação simples:** o arquivo auxiliar contém `prefix + caption + suffix` sem nenhum delimitador inserido. Quer `"mcpt_style, <caption>"`? Coloque a vírgula e o espaço no prefixo.
+- **Radicais conflitantes são rejeitados, nunca mesclados.** Duas imagens cujos radicais correspondem — `img.png` e `img.jpg` em uma pasta ou arquivos com o mesmo radical de duas pastas sob um `--out-dir` — reivindicariam um único `.txt`. O plain-sight rejeita todo o lote antes de carregar o modelo, nomeia os infratores e sai `1`. Ele não renomeará um arquivo auxiliar para evitar o conflito: os treinadores usam a correspondência exata do radical, portanto, uma alteração de nome deixaria a legenda órfã e a imagem sem legenda.
+- **As gravações são atômicas.** Cada arquivo auxiliar é gravado em um arquivo temporário no mesmo diretório e movido para o local correto, para que uma interrupção nunca deixe uma legenda parcial no caminho final. Um arquivo auxiliar que existe, mas está vazio, é tratado como incompleto e recebe uma nova legenda.
+- **Novas execuções idempotentes:** arquivos auxiliares existentes não vazios são ignorados e não têm custo, a menos que `--overwrite` / `overwrite=true`.
+- **Determinístico:** `do_sample=false` + busca em feixe contra uma versão fixa — relegendar uma imagem inalterada reproduz o mesmo texto, portanto, as diferenças significam algo.
+
+## Provenance (Procedência)
+
+O fluxo de dados do conjunto de dados produz dados de treinamento. Seis meses depois, a pergunta é: quais pesos produziram quais legendas — então a resposta acompanha a saída.
+
+- **A revisão do modelo é fixada** por padrão para `4271c66b88cdbc05735372ec13b2360108de5317`. Sem uma fixação, o HuggingFace resolve para qualquer que seja o ramo padrão do repositório atualmente apontado, e uma retag silenciosa alteraria as legendas sob entradas inalteradas. Substitua com `PLAIN_SIGHT_MODEL_REVISION`.
+- **Cada carga útil de saída nomeia os pesos.** `describe_image`, `read_text`, `describe_batch`, `sight_selftest` e os modos `--json` do CLI e o resumo do lote carregam `model_id` e `revision_resolved` — a revisão que o modelo carregado realmente relata, não a constante que foi solicitada. `sight_status` relata ambos, para que uma incompatibilidade seja visível.
+- **`--manifest PATH` grava um registro de execução** — versão da ferramenta, ID do modelo, revisão solicitada e resolvida, dispositivo, dtype, nível de detalhe, prefixo/sufixo, resultados e contagens por imagem. Opt-in e nunca inferido: nenhum manifesto é gravado a menos que você passe um caminho, e um caminho que entre em conflito com um arquivo auxiliar calculado é rejeitado. Ele contém um carimbo de data/hora, portanto, ao contrário das legendas, não é reproduzível byte a byte.
 
 ## Níveis de detalhe
 
@@ -113,6 +152,7 @@ O seu ponto forte é a eficiência e a licença, não a profundidade da análise
 | Variável de ambiente | Padrão / Predefinido | Objetivo / Finalidade |
 |---------|---------|---------|
 | `PLAIN_SIGHT_MODEL_ID` | `florence-community/Florence-2-large` | Modelo da Hugging Face |
+| `PLAIN_SIGHT_MODEL_REVISION` | `4271c66b…` (fixado) | Revisão do modelo; o mecanismo por trás da alegação de reprodutibilidade. |
 | `PLAIN_SIGHT_MODEL_DIR` | Cache padrão do HF | Diretório de cache do modelo |
 | `PLAIN_SIGHT_DEVICE` | `auto` (CUDA se disponível, caso contrário, CPU) | dispositivo de iluminação portátil |
 | `PLAIN_SIGHT_DTYPE` | `float16` em CUDA, precisão total na CPU | `float16` / `bfloat16` / `float32` |
@@ -121,8 +161,9 @@ O seu ponto forte é a eficiência e a licença, não a profundidade da análise
 | `PLAIN_SIGHT_LOG_LEVEL` | `WARNING` | `DEBUG` / `INFO` / `WARNING` / `ERROR` |
 | `PLAIN_SIGHT_EAGER_LOAD` | desativar; remover; anular; desconfigurar | Se o valor for verdadeiro, carregue o modelo no início da execução do servidor. |
 
-**Registo de eventos:** apenas para stderr (stdout é o canal do protocolo MCP), nome do registrador
-`plain_sight`.
+**Registro:** apenas stderr (stdout é o canal de protocolo MCP), nome do registrador `plain_sight`. `PLAIN_SIGHT_LOG_LEVEL` é respeitado em ambas as superfícies.
+
+**Carregamento antecipado:** com `PLAIN_SIGHT_EAGER_LOAD` verdadeiro, o servidor MCP carrega no início em vez de na primeira chamada. Uma falha nunca mata a importação do servidor — ela é relatada por `sight_status` como `eager_load_error` e lançada como um `ToolError` na primeira chamada da ferramenta que precisa do modelo.
 
 **Primeira chamada:** o modelo é carregado de forma preguiçosa — a primeira chamada para descrever/fazer OCR carrega o Florence-2 (~10–20 segundos em uma GPU; a primeira chamada baixa cerca de 1,5 GB). As chamadas subsequentes demoram aproximadamente 1–2 segundos por imagem com o nível de detalhe `high` em uma GPU moderna.
 
@@ -139,11 +180,11 @@ O seu ponto forte é a eficiência e a licença, não a profundidade da análise
 
 Esta ferramenta funciona apenas em modo local.
 
-- **Dados acessados:** arquivos de imagem locais (somente leitura); o cache do modelo HuggingFace (escrito uma vez no primeiro download); `.txt` arquivos auxiliares de legenda — os ÚNICOS arquivos que ele grava, apenas onde o chamador solicitou (`out_dir` ou próximo à imagem), e os arquivos auxiliares existentes são substituídos apenas sob solicitação explícita `--overwrite`.
-- **Nenhuma saída de rede durante a execução** — o modelo é baixado uma vez na primeira utilização e, em seguida, toda a inferência é local.
-- **Nenhuma execução de código remoto** — apenas classes nativas de transformadores; `trust_remote_code` nunca é transmitido, portanto, nenhum código Python obtido do repositório é executado.
-- **Nenhum tratamento de dados confidenciais, nenhuma telemetria** — nada é lido ou enviado para lugar algum.
-- **Apenas erros estruturados** — rastreamentos de pilha brutos nunca chegam aos clientes MCP ou aos utilizadores da CLI. Códigos de saída da CLI: 0 – ok; 1 – erro do utilizador; 2 – erro em tempo de execução; 3 – sucesso parcial.
+- **Dados acessados:** arquivos de imagem locais (somente leitura); o cache do modelo HuggingFace (gravado uma vez no primeiro download); e os arquivos que ele grava — legendas `.txt`, apenas onde o chamador solicitou (`out_dir` ou ao lado da imagem), mais um manifesto JSON se e somente se `--manifest` / `manifest_path` fornecerem um caminho explícito. Os arquivos auxiliares existentes são substituídos apenas sob `--overwrite` explícito.
+- **Nenhuma saída de rede em tempo de execução** — o modelo é baixado uma vez no primeiro uso, então toda a inferência é local.
+- **Nenhuma execução de código remoto** — apenas classes nativas do transformador; `trust_remote_code` nunca é passado, portanto, nenhum Python buscado no hub é executado.
+- **Sem tratamento de segredos, sem telemetria** — nada é lido ou enviado para lugar algum.
+- **Apenas erros estruturados** — rastreamentos de pilha brutos nunca chegam aos clientes MCP ou aos usuários do CLI. Códigos de saída do CLI: 0 ok · 1 erro do usuário · 2 erro em tempo de execução · 3 sucesso parcial.
 
 Política completa: [SECURITY.md](SECURITY.md). Mantida ativamente; as versões suportadas estão listadas ali.
 
@@ -160,25 +201,32 @@ Política completa: [SECURITY.md](SECURITY.md). Mantida ativamente; as versões 
 # Install in editable mode with dev dependencies
 pip install -e ".[dev]"
 
-# CI-safe tests (no model, no GPU)
-pytest tests/test_edge_cases.py -v
+# CI-safe suite (no model, no GPU) — this is what CI runs
+pytest -m "not dogfood" -v
 
-# Dogfood tests (real model + GPU)
-pytest tests/test_dogfood.py -v
+# Dogfood suite (real model + GPU, local only)
+pytest -m dogfood -v
 
-# Full verify: imports, edge tests, build
+# Everything
+pytest
+
+# Full verify: imports, MCP tool surface, CI-safe tests, wheel + sdist build
 bash verify.sh
 ```
+
+Os testes selecionam por marcador, não por nome de arquivo, portanto, um novo arquivo de teste seguro para CI é detectado sem tocar no CI. No Windows, um ponto de análise desatualizado no sistema temporário compartilhado pode quebrar a raiz temporária padrão do pytest; `verify.sh` o realoca via `PYTEST_DEBUG_TEMPROOT`, e `pythonpath = ["."]` mantém o script do console e `python -m pytest` em sincronia.
 
 ## Arquitetura
 
 ```
 engine.py    Standalone Florence-2 wrapper — no MCP dependency.
              Lazy-loads the model; validation runs BEFORE the load.
+             Owns the provenance stamp and the shared logging setup.
              Importable directly: from plain_sight.engine import Florence2Engine
 
 sidecars.py  The training-data contract, pure stdlib: basename pairing,
-             bare concatenation, directory expansion. Testable without torch.
+             bare concatenation, collision detection, atomic writes,
+             directory expansion. Testable without torch.
 
 server.py    FastMCP wrapper exposing engine methods as MCP tools.
              Thin layer: validation, error shaping, tool metadata.

@@ -15,11 +15,19 @@ some failures). Errors print one structured line to stderr:
 
 import argparse
 import json
+import logging
 import sys
 
 from plain_sight import __version__
-from plain_sight.engine import Florence2Engine, DETAIL_TASKS
-from plain_sight.sidecars import compose_caption, iter_image_files, sidecar_path_for
+from plain_sight.engine import Florence2Engine, DETAIL_TASKS, configure_logging
+from plain_sight.sidecars import (
+    compose_caption,
+    find_sidecar_collisions,
+    iter_image_files,
+    sidecar_path_for,
+)
+
+logger = logging.getLogger("plain_sight")
 
 
 def _err(code: str, message: str, hint: str) -> None:
@@ -114,6 +122,20 @@ def _cmd_batch(args: argparse.Namespace, engine: Florence2Engine) -> int:
         return 1
 
     out_dir = Path(args.out_dir).resolve() if args.out_dir else None
+    collisions = find_sidecar_collisions(images, out_dir)
+    if collisions:
+        n = len(collisions)
+        path_word = "sidecar path is" if n == 1 else "sidecar paths are"
+        _err(
+            "SIDECAR_COLLISION",
+            f"{n} {path_word} claimed by 2+ images",
+            "captioning would silently mislabel training data — resolve the clash or pass --out-dir with unique stems",
+        )
+        for sidecar, claimants in collisions.items():
+            names = ", ".join(str(p) for p in claimants)
+            print(f"  {sidecar}  <-  {names}", file=sys.stderr)
+        return 1
+
     if out_dir is not None:
         out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -134,8 +156,9 @@ def _cmd_batch(args: argparse.Namespace, engine: Florence2Engine) -> int:
             )
             written += 1
             print(f"[{i}/{total}] wrote {sidecar.name}", file=sys.stderr)
-        except (FileNotFoundError, ValueError) as exc:
+        except Exception as exc:
             failed += 1
+            logger.debug("batch item failed", exc_info=exc)
             print(f"[{i}/{total}] FAILED {image.name}: {exc}", file=sys.stderr)
 
     print(json.dumps({
@@ -163,6 +186,7 @@ def _cmd_selftest(engine: Florence2Engine) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    configure_logging()
     args = build_parser().parse_args(argv)
     engine = Florence2Engine()
     try:
@@ -188,6 +212,7 @@ def main(argv: list[str] | None = None) -> int:
         _err("INTERRUPTED", "cancelled by user", "partial sidecars from `batch` are kept")
         code = 1
     except Exception as exc:  # noqa: BLE001 — CLI boundary: no raw stacks
+        logger.debug("internal error", exc_info=exc)
         _err("INTERNAL", f"{exc.__class__.__name__}: {exc}",
              "set PLAIN_SIGHT_LOG_LEVEL=DEBUG for details; try PLAIN_SIGHT_DEVICE=cpu")
         code = 2

@@ -37,6 +37,23 @@ def sidecar_path_for(image_path: str | Path, out_dir: str | Path | None = None) 
     return image.with_name(name)
 
 
+def find_sidecar_collisions(
+    images: list[str | Path],
+    out_dir: str | Path | None = None,
+) -> dict[Path, list[Path]]:
+    """Map each contested sidecar path to the images competing for it.
+
+    Only genuinely contested paths appear — a sidecar claimed by exactly one
+    image is not in the result. An empty dict means the batch is safe to write.
+    """
+    groups: dict[Path, list[Path]] = {}
+    for raw in images:
+        image = Path(raw)
+        sidecar = sidecar_path_for(image, out_dir)
+        groups.setdefault(sidecar, []).append(image)
+    return {path: claimants for path, claimants in groups.items() if len(claimants) > 1}
+
+
 def iter_image_files(paths: list[str | Path]) -> list[Path]:
     """Expand a mixed list of files and directories into a sorted image list.
 

@@ -33,23 +33,15 @@ from plain_sight.engine import (
     DEFAULT_DEVICE,
     DEFAULT_DTYPE,
     DETAIL_TASKS,
+    configure_logging,
 )
-from plain_sight.sidecars import compose_caption, sidecar_path_for
+from plain_sight.sidecars import compose_caption, find_sidecar_collisions, sidecar_path_for
 
 logger = logging.getLogger("plain_sight")
 
-# Configurable verbosity — PLAIN_SIGHT_LOG_LEVEL=DEBUG|INFO|WARNING|ERROR
-# (default WARNING). Logs go to STDERR only: STDOUT is the MCP STDIO protocol
-# channel and must never be polluted.
-_log_level = os.environ.get("PLAIN_SIGHT_LOG_LEVEL", "WARNING").strip().upper()
-logger.setLevel(getattr(logging, _log_level, logging.WARNING))
-if not logger.handlers:
-    _handler = logging.StreamHandler(sys.stderr)
-    _handler.setFormatter(
-        logging.Formatter("%(asctime)s %(name)s [%(levelname)s] %(message)s")
-    )
-    logger.addHandler(_handler)
-    logger.propagate = False
+# Logs go to STDERR only: STDOUT is the MCP STDIO protocol channel and must
+# never be polluted. Shared setup lives on the engine so the CLI inherits it.
+configure_logging()
 
 # ---------------------------------------------------------------------------
 # Server + engine setup — module level deliberately: for an MCP server the
@@ -60,7 +52,7 @@ if not logger.handlers:
 mcp = FastMCP(name="plain-sight")
 
 engine = Florence2Engine(
-    model_id=os.environ.get("PLAIN_SIGHT_MODEL_ID", DEFAULT_MODEL_ID),
+    model_id=DEFAULT_MODEL_ID,
     revision=os.environ.get("PLAIN_SIGHT_MODEL_REVISION", DEFAULT_MODEL_REVISION),
     cache_dir=DEFAULT_CACHE_DIR,
     device=DEFAULT_DEVICE,
@@ -190,6 +182,21 @@ def describe_batch(
     results: list[dict] = []
     errors: list[dict] = []
     skipped = 0
+
+    if write_sidecars:
+        collisions = find_sidecar_collisions(resolved, out_dir_path)
+        if collisions:
+            n = len(collisions)
+            lines = [
+                f"Sidecar collision: {n} output path"
+                f"{'s are' if n != 1 else ' is'} claimed by 2+ images — captioning would "
+                "silently mislabel training data. Give the images distinct stems, or drop the "
+                "duplicates, then retry."
+            ]
+            for sidecar, claimants in collisions.items():
+                names = ", ".join(str(p) for p in claimants)
+                lines.append(f"  {sidecar}  <-  {names}")
+            raise ToolError("\n".join(lines))
 
     _ensure_model()
     for path in resolved:

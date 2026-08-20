@@ -67,4 +67,4 @@ jobs:
           "
 
       - name: Run edge-case tests
-        run: pytest tests/test_edge_cases.py -v
+        run: pytest -m "not dogfood" -v

@@ -40,11 +40,41 @@ from plain_sight import __version__ as _package_version
 
 logger = logging.getLogger("plain_sight")
 
+
+def configure_logging(default_level: str = "WARNING") -> int:
+    """Configure the ``plain_sight`` logger from PLAIN_SIGHT_LOG_LEVEL.
+
+    Idempotent — safe to call from every entry point. Logs go to STDERR only:
+    for the MCP server STDOUT is the STDIO protocol channel and must never be
+    polluted, and for the CLI it is the caption itself. Returns the effective
+    numeric level.
+    """
+    raw = os.environ.get("PLAIN_SIGHT_LOG_LEVEL")
+    name = raw.strip().upper() if raw and raw.strip() else default_level.strip().upper()
+    level = getattr(logging, name, None)
+    if not isinstance(level, int):
+        fallback_name = default_level.strip().upper()
+        level = getattr(logging, fallback_name, logging.WARNING)
+        if not isinstance(level, int):
+            level = logging.WARNING
+    logger.setLevel(level)
+    if not logger.handlers:
+        handler = logging.StreamHandler(sys.stderr)
+        handler.setFormatter(
+            logging.Formatter("%(asctime)s %(name)s [%(levelname)s] %(message)s")
+        )
+        logger.addHandler(handler)
+        logger.propagate = False
+    return logger.level
+
+
 # ---------------------------------------------------------------------------
 # Defaults (overridable via env vars)
 # ---------------------------------------------------------------------------
 
-DEFAULT_MODEL_ID = "florence-community/Florence-2-large"
+DEFAULT_MODEL_ID = os.environ.get(
+    "PLAIN_SIGHT_MODEL_ID", "florence-community/Florence-2-large"
+)
 DEFAULT_MODEL_REVISION = os.environ.get("PLAIN_SIGHT_MODEL_REVISION", None)
 DEFAULT_CACHE_DIR = os.environ.get("PLAIN_SIGHT_MODEL_DIR", None)
 DEFAULT_DEVICE = os.environ.get(

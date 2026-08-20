@@ -52,11 +52,17 @@ logger = logging.getLogger("plain_sight")
 # never be polluted. Shared setup lives on the engine so the CLI inherits it.
 configure_logging()
 
+def _env_truthy(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in ("1", "true", "yes", "on")
+
+
 # ---------------------------------------------------------------------------
 # Server + engine setup — constructed at import so sight_status can report
-# identity without loading weights. eager_load is forced off: an unresolvable
-# MODEL_ID must not kill `import plain_sight.server` (B-01). Load failures
-# belong to _ensure_model() → ToolError. sight_status still does not load.
+# identity without loading weights. Construction itself never eager-loads
+# (import must not die on a bad MODEL_ID). If PLAIN_SIGHT_EAGER_LOAD is
+# truthy we then attempt the load in a try: success leaves the model hot;
+# failure is stored and surfaced as ToolError on the first tool that needs
+# it. sight_status never calls _ensure_model().
 # ---------------------------------------------------------------------------
 
 mcp = FastMCP(name="plain-sight")
@@ -69,6 +75,14 @@ engine = Florence2Engine(
     dtype=DEFAULT_DTYPE,
     eager_load=False,
 )
+
+_eager_load_error: BaseException | None = None
+if _env_truthy("PLAIN_SIGHT_EAGER_LOAD"):
+    try:
+        engine._ensure_loaded()
+    except Exception as exc:
+        _eager_load_error = exc
+        logger.error("PLAIN_SIGHT_EAGER_LOAD failed at server start: %s", exc)
 
 _HONESTY_GUIDANCE = (
     "Descriptions are GENERATIVE (Florence-2): fluent, usually accurate, but "
@@ -101,14 +115,21 @@ def _tool_error(exc: Exception) -> ToolError:
 
 
 def _ensure_model() -> None:
-    if not engine.loaded:
-        try:
-            engine._ensure_loaded()
-        except Exception as e:
-            raise ToolError(
-                f"Model not loaded: {e}. Check PLAIN_SIGHT_MODEL_DIR, "
-                f"PLAIN_SIGHT_DEVICE, and network (first load downloads ~1.5 GB)."
-            )
+    if engine.loaded:
+        return
+    if _eager_load_error is not None:
+        raise ToolError(
+            f"Model not loaded: {_eager_load_error}. "
+            "PLAIN_SIGHT_EAGER_LOAD failed at server start. Check "
+            "PLAIN_SIGHT_MODEL_ID / PLAIN_SIGHT_MODEL_DIR / PLAIN_SIGHT_DEVICE."
+        )
+    try:
+        engine._ensure_loaded()
+    except Exception as e:
+        raise ToolError(
+            f"Model not loaded: {e}. Check PLAIN_SIGHT_MODEL_DIR, "
+            "PLAIN_SIGHT_DEVICE, and network (first load downloads ~1.5 GB)."
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -349,7 +370,13 @@ def sight_status() -> dict:
     """
     t0 = time.perf_counter()
     result = engine.status()
-    if not result.get("loaded"):
+    if _eager_load_error is not None and not result.get("loaded"):
+        result["eager_load_attempted"] = True
+        result["eager_load_error"] = str(_eager_load_error)
+        result["note"] = (
+            f"PLAIN_SIGHT_EAGER_LOAD failed at server start: {_eager_load_error}"
+        )
+    elif not result.get("loaded"):
         result["note"] = (
             "Model not loaded yet — the first describe/OCR call loads Florence-2 "
             "(~10-20s on GPU; the first-ever call downloads ~1.5 GB). Set "

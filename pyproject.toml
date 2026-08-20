@@ -41,6 +41,7 @@ packages = ["src/plain_sight"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 markers = [
     "dogfood: requires the Florence-2 model and a GPU (not CI-safe)",
 ]

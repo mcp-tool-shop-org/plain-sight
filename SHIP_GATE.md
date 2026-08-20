@@ -58,7 +58,7 @@
 
 - [x] `[all]` Logo in README header (brand repo lockup, width 400, centered; mark variant in Starlight header) (2026-08-20)
 - [x] `[all]` Translations (polyglot-mcp via TranslateGemma 27B local, 8 languages; stray-fence repair pass applied and verified against source structure) (2026-08-20)
-- [ ] `[org]` Landing page (@mcptoolshop/site-theme) — checked after the Pages deploy is verified live
+- [x] `[org]` Landing page (@mcptoolshop/site-theme) + Starlight handbook, deployed and verified live (landing/handbook/pagefind all 200) (2026-08-20)
 - [x] `[all]` GitHub repo metadata: description ("Point it at an image, an AI says what it sees…"), homepage, 8 topics (2026-08-20)
 
 ---

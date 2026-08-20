@@ -7,7 +7,9 @@ test here must pass on a bare checkout with only the dev dependencies.
 """
 
 import importlib
+import json
 import logging
+import os
 
 import pytest
 
@@ -15,14 +17,20 @@ from plain_sight.engine import (
     DETAIL_TASKS,
     MAX_NEW_TOKENS_CEILING,
     OCR_TASK,
+    PINNED_MODEL_REVISION,
+    Florence2Engine,
 )
-from plain_sight.cli import build_parser, main
+from plain_sight.cli import build_parser, main, _err
 from plain_sight.sidecars import (
     IMAGE_EXTS,
     compose_caption,
     find_sidecar_collisions,
     iter_image_files,
+    manifest_collides_with_sidecars,
+    sidecar_is_complete,
     sidecar_path_for,
+    write_batch_manifest,
+    write_sidecar_atomic,
 )
 
 
@@ -365,3 +373,282 @@ class TestBatchContinuesOnRuntimeError:
         assert "INTERRUPTED" in captured.err
         assert '"failed"' not in captured.out
         assert list(tmp_path.glob("*.txt")) == []
+
+
+class TestEngineCtorInsideErrorBoundary:
+    """B-01: load failure is a structured runtime error, not a raw stack at exit 1.
+
+    Would have caught: Florence2Engine() sitting above main()'s try (and MCP
+    import dying on PLAIN_SIGHT_EAGER_LOAD + a bad MODEL_ID).
+    """
+
+    def test_cli_eager_load_failure_is_internal_exit_2(self, monkeypatch, capsys):
+        def boom(self):
+            raise OSError("repo not found")
+
+        monkeypatch.setenv("PLAIN_SIGHT_EAGER_LOAD", "1")
+        monkeypatch.setattr("plain_sight.cli.Florence2Engine._ensure_loaded", boom)
+        code = main(["status"])
+        captured = capsys.readouterr()
+        assert code == 2
+        assert "INTERNAL" in captured.err
+        assert "Traceback" not in captured.err
+
+    def test_mcp_import_survives_eager_bad_id(self, monkeypatch):
+        monkeypatch.setenv("PLAIN_SIGHT_EAGER_LOAD", "1")
+        monkeypatch.setenv("PLAIN_SIGHT_MODEL_ID", "definitely-not/a-real-model")
+        import plain_sight.server as server_mod
+        importlib.reload(server_mod)
+        try:
+            assert server_mod.engine is not None
+            assert server_mod.engine.loaded is False
+
+            def boom():
+                raise OSError("repo not found")
+
+            monkeypatch.setattr(server_mod.engine, "_ensure_loaded", boom)
+            from fastmcp.exceptions import ToolError
+
+            with pytest.raises(ToolError, match="Model not loaded"):
+                server_mod._ensure_model()
+        finally:
+            monkeypatch.delenv("PLAIN_SIGHT_EAGER_LOAD", raising=False)
+            monkeypatch.delenv("PLAIN_SIGHT_MODEL_ID", raising=False)
+            importlib.reload(server_mod)
+
+
+class TestRevisionPin:
+    """B-03a/b: default revision is pinned; env overrides; status is split.
+
+    Would have caught: DEFAULT_MODEL_REVISION = None, and status() omitting
+    requested vs resolved (or raising on a missing _commit_hash).
+    """
+
+    def test_constructed_engine_requests_the_pin(self, monkeypatch):
+        monkeypatch.delenv("PLAIN_SIGHT_MODEL_REVISION", raising=False)
+        import plain_sight.engine as engine_mod
+        importlib.reload(engine_mod)
+        try:
+            e = engine_mod.Florence2Engine(device="cpu", dtype=None, eager_load=False)
+            assert e.revision == PINNED_MODEL_REVISION
+            status = e.status()
+            assert status["revision_requested"] == PINNED_MODEL_REVISION
+            assert status["revision_resolved"] is None  # not loaded
+            assert e.loaded is False
+        finally:
+            importlib.reload(engine_mod)
+
+    def test_env_override_changes_requested(self, monkeypatch):
+        monkeypatch.setenv("PLAIN_SIGHT_MODEL_REVISION", "abc123deadbeef")
+        import plain_sight.engine as engine_mod
+        importlib.reload(engine_mod)
+        try:
+            e = engine_mod.Florence2Engine(device="cpu", dtype=None, eager_load=False)
+            assert e.revision == "abc123deadbeef"
+            assert e.status()["revision_requested"] == "abc123deadbeef"
+        finally:
+            monkeypatch.delenv("PLAIN_SIGHT_MODEL_REVISION", raising=False)
+            importlib.reload(engine_mod)
+
+    def test_resolved_degrades_when_commit_hash_missing(self, cold_engine):
+        class Dummy:
+            config = object()  # no _commit_hash
+
+            def parameters(self):
+                return []
+
+        cold_engine._model = Dummy()
+        status = cold_engine.status()
+        assert status["revision_resolved"] is None
+
+
+class TestBatchManifest:
+    """B-03c: opt-in explicit path; collision refused before load/write.
+
+    Would have caught: a batch that writes a provenance file with no flag,
+    or a manifest path that overwrites a sidecar.
+    """
+
+    def test_no_manifest_without_flag(self, tmp_path, monkeypatch):
+        img = tmp_path / "a.png"
+        img.write_bytes(b"stub")
+        monkeypatch.setattr(
+            "plain_sight.cli.Florence2Engine.describe",
+            lambda self, *a, **k: "caption",
+        )
+        code = main(["batch", str(img)])
+        assert code == 0
+        json_files = list(tmp_path.glob("*.json")) + list(tmp_path.rglob("*.json"))
+        assert json_files == []
+        assert (tmp_path / "a.txt").read_text(encoding="utf-8") == "caption"
+
+    def test_manifest_round_trips(self, tmp_path, monkeypatch):
+        img = tmp_path / "a.png"
+        img.write_bytes(b"stub")
+        man = tmp_path / "run.json"
+        monkeypatch.setattr(
+            "plain_sight.cli.Florence2Engine.describe",
+            lambda self, *a, **k: "caption",
+        )
+        code = main(["batch", str(img), "--prefix", "trig, ", "--manifest", str(man)])
+        assert code == 0
+        payload = json.loads(man.read_text(encoding="utf-8"))
+        for key in (
+            "plain_sight_version", "torch_version", "transformers_version",
+            "model_id", "revision_requested", "revision_resolved",
+            "device", "dtype", "num_beams", "detail", "max_new_tokens",
+            "prefix", "suffix", "total", "written", "skipped_existing", "failed",
+            "images", "created_at",
+        ):
+            assert key in payload, key
+        assert payload["prefix"] == "trig, "
+        assert payload["written"] == 1
+        assert payload["images"][0]["status"] == "written"
+
+    def test_manifest_collision_refused_before_write(self, tmp_path, monkeypatch):
+        img = tmp_path / "a.png"
+        img.write_bytes(b"stub")
+        # Sidecar would be a.txt — collide the manifest onto it.
+        called = {"n": 0}
+
+        def fake_describe(self, *a, **k):
+            called["n"] += 1
+            return "caption"
+
+        monkeypatch.setattr("plain_sight.cli.Florence2Engine.describe", fake_describe)
+        code = main(["batch", str(img), "--manifest", str(tmp_path / "a.txt")])
+        captured_fail = called["n"]
+        assert code == 1
+        assert captured_fail == 0
+        assert not (tmp_path / "a.txt").exists()
+
+    def test_mcp_manifest_collision_raises_before_load(self, tmp_path, monkeypatch):
+        img = tmp_path / "a.png"
+        img.write_bytes(b"stub")
+        import plain_sight.server as server_mod
+        monkeypatch.setattr(server_mod.engine, "_ensure_loaded", lambda: (_ for _ in ()).throw(RuntimeError("should not load")))
+        from fastmcp.exceptions import ToolError
+        with pytest.raises(ToolError, match="collides"):
+            server_mod.describe_batch(
+                image_paths=[str(img)],
+                manifest_path=str(tmp_path / "a.txt"),
+            )
+
+
+class TestMcpWriteErrorDistinct:
+    """B-06a: OSError on sidecar write is not 'description failed'.
+
+    Would have caught: except Exception mapping ENOSPC to the inference string.
+    """
+
+    def test_enospace_is_write_failure(self, tmp_path, monkeypatch):
+        img = tmp_path / "a.png"
+        img.write_bytes(b"stub")
+        import plain_sight.server as server_mod
+        monkeypatch.setattr(server_mod.engine, "_ensure_loaded", lambda: None)
+        monkeypatch.setattr(server_mod.engine, "describe", lambda *a, **k: "caption")
+        server_mod.engine._model = object()  # pretend loaded so _ensure_model skips
+
+        def boom(path, text):
+            raise OSError(28, "No space left on device")
+
+        monkeypatch.setattr("plain_sight.server.write_sidecar_atomic", boom)
+        result = server_mod.describe_batch(image_paths=[str(img)])
+        assert result["errors"] == 1
+        msg = result["error_details"][0]["error"]
+        assert "write" in msg.lower() or "disk" in msg.lower() or "IO" in msg
+        assert msg != "description failed"
+
+
+class TestAtomicSidecarWrite:
+    """B-02: empty sidecar is recaptioned; replace is used; interrupt copy updated.
+
+    Would have caught: exists()-only skip of a 0-byte file, and write_text
+    truncating the destination in place.
+    """
+
+    def test_empty_sidecar_is_recaptioned(self, tmp_path, monkeypatch):
+        img = tmp_path / "a.png"
+        img.write_bytes(b"stub")
+        empty = tmp_path / "a.txt"
+        empty.write_text("", encoding="utf-8")
+        monkeypatch.setattr(
+            "plain_sight.cli.Florence2Engine.describe",
+            lambda self, *a, **k: "new caption",
+        )
+        code = main(["batch", str(img)])
+        assert code == 0
+        assert empty.read_text(encoding="utf-8") == "new caption"
+
+    def test_nonempty_sidecar_still_skipped(self, tmp_path, monkeypatch):
+        img = tmp_path / "a.png"
+        img.write_bytes(b"stub")
+        (tmp_path / "a.txt").write_text("old", encoding="utf-8")
+        monkeypatch.setattr(
+            "plain_sight.cli.Florence2Engine.describe",
+            lambda self, *a, **k: (_ for _ in ()).throw(RuntimeError("should skip")),
+        )
+        code = main(["batch", str(img)])
+        assert code == 0
+        assert (tmp_path / "a.txt").read_text(encoding="utf-8") == "old"
+
+    def test_replace_is_used(self, tmp_path, monkeypatch):
+        dest = tmp_path / "a.txt"
+        seen = {}
+
+        real_replace = os.replace
+
+        def spy(src, dst):
+            seen["src"] = str(src)
+            seen["dst"] = str(dst)
+            return real_replace(src, dst)
+
+        monkeypatch.setattr("plain_sight.sidecars.os.replace", spy)
+        write_sidecar_atomic(dest, "hello")
+        assert dest.read_text(encoding="utf-8") == "hello"
+        assert seen["dst"] == str(dest)
+        assert seen["src"].endswith(".tmp")
+        assert not dest.with_name("a.txt.tmp").exists()
+
+    def test_interrupt_hint_names_discard(self):
+        assert "in-flight sidecar discarded" in open(
+            "src/plain_sight/cli.py", encoding="utf-8"
+        ).read()
+
+
+class TestVramDeviceScoped:
+    """B-04: cpu engines must not report a current-device CUDA number.
+
+    Full cuda:N scoping needs a GPU; this catches the unscoped
+    memory_allocated() call on the default device.
+    """
+
+    def test_cpu_status_omits_vram(self, cold_engine):
+        status = cold_engine.status()
+        assert "vram_mb" not in status
+
+
+class TestVerifyShMarker:
+    """B-06b: verify.sh must use the same marker CI does.
+
+    Would have caught: Wave 1 leaving verify.sh on a hardcoded filename.
+    """
+
+    def test_verify_sh_uses_not_dogfood_marker(self):
+        text = open("verify.sh", encoding="utf-8").read()
+        assert '-m "not dogfood"' in text
+        assert "tests/test_edge_cases.py" not in text.split("== 3/4")[1]
+
+
+class TestErrAsciiSeparator:
+    """B-05: _err separator is ASCII. Would have caught the em-dash in the format.
+
+    Mojibake on a real cp1252 pipe is hardware/codepage; this catches the glyph.
+    """
+
+    def test_separator_is_ascii_double_dash(self, capsys):
+        _err("CODE", "message", "hint")
+        line = capsys.readouterr().err
+        assert " — " not in line
+        assert " -- " in line
+        assert line.encode("ascii")  # must not raise

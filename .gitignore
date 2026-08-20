@@ -9,3 +9,8 @@ build/
 .pytest-tmp/
 outputs/
 .env
+site/.astro/
+site/node_modules/
+site/dist/
+.polyglot-cache.json
+.stage-d/

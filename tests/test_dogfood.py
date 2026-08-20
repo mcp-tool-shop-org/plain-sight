@@ -39,9 +39,24 @@ class TestDescribe:
 
 class TestOcr:
     def test_ocr_returns_string(self, engine, knight_png):
-        # The knight sprite has no real text — the contract is just: a str,
-        # no crash. Content assertions belong to a text-bearing fixture.
         assert isinstance(engine.ocr(knight_png), str)
+
+    def test_ocr_no_text_is_not_presented_as_verified(self, engine, knight_png):
+        # GPU-only. Knight has no glyphs. Envelope must still qualify the
+        # string -- we do not empty it, and we do not claim it was extracted.
+        text = engine.ocr(knight_png)
+        env = engine.ocr_envelope(text)
+        assert env["text"] == text
+        assert env["absence_of_text_unreliable"] is True
+        assert env["revision_resolved"]
+
+    def test_ocr_text_bearing_still_returns_the_text(self, engine, text_image):
+        # GPU-only. A fix that refuses everything is not a fix.
+        text = engine.ocr(text_image)
+        assert any(tok in text for tok in ("STOP", "TRAIN", "42"))
+        env = engine.ocr_envelope(text)
+        assert env["absence_of_text_unreliable"] is True
+        assert env["text"] == text
 
 
 class TestSelftest:

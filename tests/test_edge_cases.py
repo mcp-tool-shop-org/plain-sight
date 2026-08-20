@@ -10,12 +10,14 @@ import importlib
 import json
 import logging
 import os
+from pathlib import Path
 
 import pytest
 
 from plain_sight.engine import (
     DETAIL_TASKS,
     MAX_NEW_TOKENS_CEILING,
+    OCR_ABSENCE_NOTE,
     OCR_TASK,
     PINNED_MODEL_REVISION,
     Florence2Engine,
@@ -871,3 +873,92 @@ class TestStageCMcpBatchDuration:
         doc = server_mod.describe_batch.__doc__
         assert "1-2" in doc or "1–2" in doc
         assert "overwrite" in doc.lower()
+
+
+class TestP903TestsImportable:
+    """P9-03: tests package must import under the pytest console script.
+
+    Would have caught: no pythonpath, so `from tests.conftest import` dies
+    in CI while `python -m pytest` stays green.
+    """
+
+    def test_make_text_image_importable(self, tmp_path):
+        from tests.conftest import make_text_image
+        path = make_text_image(tmp_path / "t.png", "HELLO")
+        assert Path(path).is_file()
+
+
+class TestP901OcrCaveat:
+    """P9-01: OCR never presents output as verified extracted text.
+
+    CI-safe: the envelope is the gate. GPU tests live in test_dogfood.py.
+    Reverting absence_of_text_unreliable would fail this.
+    """
+
+    def test_json_ocr_qualifies_unconditionally(self, tmp_path, monkeypatch, capsys):
+        img = tmp_path / "a.png"
+        img.write_bytes(b"stub")
+        monkeypatch.setattr("plain_sight.cli.Florence2Engine.ocr", lambda self, *a, **k: "2")
+        monkeypatch.setattr("plain_sight.cli.Florence2Engine._ensure_loaded", lambda self: None)
+        code = main(["ocr", str(img), "--json"])
+        payload = json.loads(capsys.readouterr().out)
+        assert code == 0
+        assert payload["text"] == "2"
+        assert payload["absence_of_text_unreliable"] is True
+        assert payload["note"] == OCR_ABSENCE_NOTE
+
+    def test_plain_ocr_prints_caveat_on_stderr(self, tmp_path, monkeypatch, capsys):
+        img = tmp_path / "a.png"
+        img.write_bytes(b"stub")
+        monkeypatch.setattr("plain_sight.cli.Florence2Engine.ocr", lambda self, *a, **k: "-")
+        monkeypatch.setattr("plain_sight.cli.Florence2Engine._ensure_loaded", lambda self: None)
+        code = main(["ocr", str(img)])
+        captured = capsys.readouterr()
+        assert code == 0
+        assert captured.out.strip() == "-"
+        assert "OCR_CAVEAT" in captured.err
+
+
+class TestP902RevisionOnPayloads:
+    """P9-02: every structured model-output payload names revision_resolved.
+
+    Would have caught: stamping status() but not describe/ocr JSON.
+    Remove the key from one surface and this fails.
+    """
+
+    def test_cli_and_mcp_payloads_include_revision(self, tmp_path, monkeypatch, capsys):
+        img = tmp_path / "a.png"
+        img.write_bytes(b"stub")
+
+        def fake_prov(self):
+            return {"model_id": "test/id", "revision_resolved": "abc123"}
+
+        monkeypatch.setattr(Florence2Engine, "output_provenance", fake_prov)
+        monkeypatch.setattr(Florence2Engine, "describe", lambda self, *a, **k: "caption")
+        monkeypatch.setattr(Florence2Engine, "ocr", lambda self, *a, **k: "2")
+        monkeypatch.setattr(Florence2Engine, "_ensure_loaded", lambda self: None)
+
+        main(["describe", str(img), "--json"])
+        desc = json.loads(capsys.readouterr().out)
+        assert desc["revision_resolved"] == "abc123"
+
+        main(["ocr", str(img), "--json"])
+        ocr = json.loads(capsys.readouterr().out)
+        assert ocr["revision_resolved"] == "abc123"
+
+        main(["batch", str(img)])
+        batch = json.loads(capsys.readouterr().out)
+        assert batch["revision_resolved"] == "abc123"
+
+        import plain_sight.server as server_mod
+        monkeypatch.setattr(server_mod.engine, "_ensure_loaded", lambda: None)
+        monkeypatch.setattr(server_mod.engine, "describe", lambda *a, **k: "caption")
+        monkeypatch.setattr(server_mod.engine, "ocr", lambda *a, **k: "2")
+        monkeypatch.setattr(server_mod.engine, "output_provenance", lambda: fake_prov(server_mod.engine))
+
+        d = server_mod.describe_image(str(img))
+        assert d["revision_resolved"] == "abc123"
+        r = server_mod.read_text(str(img))
+        assert r["revision_resolved"] == "abc123"
+        b = server_mod.describe_batch(image_paths=[str(img)], write_sidecars=False)
+        assert b["revision_resolved"] == "abc123"

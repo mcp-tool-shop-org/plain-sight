@@ -13,11 +13,24 @@ from pathlib import Path
 
 import pytest
 
+from PIL import Image, ImageDraw
+
 from plain_sight.engine import Florence2Engine
 
 ASSETS_DIR = (
     Path(__file__).resolve().parents[1] / "src" / "plain_sight" / "assets" / "selftest"
 )
+
+
+def make_text_image(path: str | Path, text: str = "STOP THE TRAIN 42") -> str:
+    """Generate a simple text-bearing PNG with PIL. No committed binary."""
+    dest = Path(path)
+    img = Image.new("RGB", (480, 96), "white")
+    draw = ImageDraw.Draw(img)
+    draw.text((16, 28), text, fill="black")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    img.save(dest)
+    return str(dest)
 
 
 def _asset(name: str) -> str:
@@ -65,3 +78,8 @@ def engine():
 def cold_engine():
     """Unloaded engine for validation-order tests. Never loads the model."""
     return Florence2Engine(device="cpu", dtype=None)
+
+
+@pytest.fixture()
+def text_image(tmp_path):
+    return make_text_image(tmp_path / "stop_the_train.png")

@@ -15,12 +15,12 @@ export const config: SiteConfig = {
     headline: 'An AI says',
     headlineAccent: 'what it sees.',
     description:
-      'plain-sight wraps Florence-2 as an MCP server and a CLI: prose descriptions at three detail tiers, OCR, and exact-basename .txt caption sidecars for LoRA training sets. Deterministic by default. No cloud, no telemetry, never trust_remote_code.',
+      'plain-sight wraps Florence-2 as an MCP server and a CLI: prose descriptions at three detail tiers, OCR, and exact-basename .txt caption sidecars for LoRA training sets. Deterministic against a pinned model revision, and every payload names the weights that produced it. No cloud, no telemetry, never trust_remote_code.',
     primaryCta: { href: '#usage', label: 'Get started' },
     secondaryCta: { href: 'handbook/', label: 'Read the Handbook' },
     previews: [
       { label: 'Install', code: 'pip install -e .' },
-      { label: 'Describe', code: 'plain-sight describe hero.png' },
+      { label: 'Preview', code: 'plain-sight batch ./dataset --dry-run' },
       { label: 'Dataset lane', code: 'plain-sight batch ./dataset --prefix "mcpt_style, "' },
     ],
   },
@@ -38,11 +38,11 @@ export const config: SiteConfig = {
         },
         {
           title: 'The dataset lane',
-          desc: 'Exact basename pairing (img_0042.png → img_0042.txt), bare prefix+caption+suffix for trigger tokens, and idempotent re-runs that skip existing sidecars.',
+          desc: 'Exact basename pairing (img_0042.png → img_0042.txt), bare prefix+caption+suffix, atomic writes, and colliding stems refused outright rather than silently merged into one caption.',
         },
         {
-          title: 'Deterministic by default',
-          desc: 'do_sample=false + beam search: the same image reproduces the same caption, so caption diffs mean something happened to the image.',
+          title: 'Reproducible, and provable',
+          desc: 'do_sample=false + beam search against a pinned model revision. Every payload carries the resolved revision, and --manifest records a whole run, so a caption set can be attributed to the weights that made it.',
         },
         {
           title: 'MIT end to end',
@@ -53,8 +53,8 @@ export const config: SiteConfig = {
           desc: 'Five MCP tools for Claude (describe_image, describe_batch, read_text, sight_status, sight_selftest) and a five-command CLI share the same Florence2Engine.',
         },
         {
-          title: 'Honest about hallucination',
-          desc: "Generative captions can invent detail. plain-sight says so, and pairs with ai-eyes-mcp (SigLIP2) — a different model family — when a claim needs verifying.",
+          title: 'Honest about what it cannot know',
+          desc: 'Captions can invent detail, and OCR cannot report the absence of text -- a blank image still returns a string. plain-sight qualifies both rather than hiding them, and pairs with ai-eyes-mcp (SigLIP2) when a claim needs measuring.',
         },
       ],
     },

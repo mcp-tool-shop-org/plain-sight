@@ -1,6 +1,6 @@
 [project]
 name = "plain-sight"
-version = "1.0.0"
+version = "1.1.0"
 description = "Generative image describer MCP server + CLI — an AI says what it sees (Florence-2)"
 readme = "README.md"
 license = { text = "MIT" }

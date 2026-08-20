@@ -75,7 +75,13 @@ def configure_logging(default_level: str = "WARNING") -> int:
 DEFAULT_MODEL_ID = os.environ.get(
     "PLAIN_SIGHT_MODEL_ID", "florence-community/Florence-2-large"
 )
-DEFAULT_MODEL_REVISION = os.environ.get("PLAIN_SIGHT_MODEL_REVISION", None)
+# Hub commit of florence-community/Florence-2-large as of the v1 suite
+# (verified 2026-08-20 against the hub SHA and the rig cache). Env override
+# still wins; empty/unset falls back to the pin.
+PINNED_MODEL_REVISION = "4271c66b88cdbc05735372ec13b2360108de5317"
+DEFAULT_MODEL_REVISION = (
+    os.environ.get("PLAIN_SIGHT_MODEL_REVISION") or PINNED_MODEL_REVISION
+)
 DEFAULT_CACHE_DIR = os.environ.get("PLAIN_SIGHT_MODEL_DIR", None)
 DEFAULT_DEVICE = os.environ.get(
     "PLAIN_SIGHT_DEVICE", "cuda" if torch.cuda.is_available() else "cpu"
@@ -126,6 +132,7 @@ class Florence2Engine:
         revision: str | None = DEFAULT_MODEL_REVISION,
         dtype: str | None = DEFAULT_DTYPE,
         num_beams: int = DEFAULT_NUM_BEAMS,
+        eager_load: bool | None = None,
     ):
         self.model_id = model_id
         self.cache_dir = cache_dir
@@ -138,9 +145,11 @@ class Florence2Engine:
         # Serialize GPU forward passes — safe for concurrent callers, and
         # effectively free (inference is GPU-bound and serial on one device).
         self._forward_lock = threading.Lock()
-        if os.environ.get("PLAIN_SIGHT_EAGER_LOAD", "").strip().lower() in (
-            "1", "true", "yes", "on",
-        ):
+        if eager_load is None:
+            eager_load = os.environ.get("PLAIN_SIGHT_EAGER_LOAD", "").strip().lower() in (
+                "1", "true", "yes", "on",
+            )
+        if eager_load:
             self._ensure_loaded()
 
     @property
@@ -348,6 +357,8 @@ class Florence2Engine:
             "num_beams": self.num_beams,
             "default_max_new_tokens": DEFAULT_MAX_NEW_TOKENS,
             "detail_tiers": dict(DETAIL_TASKS),
+            "revision_requested": self.revision,
+            "revision_resolved": None,
             "python_version": sys.version,
             "torch_version": torch.__version__,
             "transformers_version": transformers.__version__,
@@ -355,8 +366,11 @@ class Florence2Engine:
         if self.loaded:
             param_count = sum(p.numel() for p in self._model.parameters())
             info["parameters"] = f"{param_count / 1e6:.0f}M"
+            cfg = getattr(self._model, "config", None)
+            info["revision_resolved"] = getattr(cfg, "_commit_hash", None)
             if self.device.startswith("cuda") and torch.cuda.is_available():
-                info["vram_mb"] = round(torch.cuda.memory_allocated() / 1024 / 1024)
+                dev = torch.device(self.device)
+                info["vram_mb"] = round(torch.cuda.memory_allocated(dev) / 1024 / 1024)
         return info
 
     def selftest(self) -> dict:

@@ -26,7 +26,7 @@ print('tools:', ', '.join(names))
 
 echo "== 3/4 CI-safe tests =="
 # Project-local basetemp: immune to stale/broken system temp dirs.
-python -m pytest tests/test_edge_cases.py -q --basetemp .pytest-tmp
+python -m pytest -m "not dogfood" -q --basetemp .pytest-tmp
 
 echo "== 4/4 build =="
 python -m build >/dev/null

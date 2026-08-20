@@ -170,9 +170,9 @@ def describe_image(
         "description": description,
         "detail": detail,
         "task": DETAIL_TASKS[detail],
-        "model_id": engine.model_id,
         "image_path": resolved,
         "elapsed_ms": elapsed,
+        **engine.output_provenance(),
     }
 
 
@@ -327,6 +327,7 @@ def describe_batch(
         "results": results,
         "error_details": errors if errors else None,
         "elapsed_ms": elapsed,
+        **engine.output_provenance(),
     }
 
 
@@ -356,8 +357,7 @@ def read_text(
     elapsed = round((time.perf_counter() - t0) * 1000)
     logger.debug("read_text completed in %.3fs", elapsed / 1000)
     return {
-        "text": text,
-        "model_id": engine.model_id,
+        **engine.ocr_envelope(text),
         "image_path": resolved,
         "elapsed_ms": elapsed,
     }

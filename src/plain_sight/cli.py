@@ -24,6 +24,7 @@ from plain_sight.engine import (
     Florence2Engine,
     DETAIL_TASKS,
     DEFAULT_MAX_NEW_TOKENS,
+    OCR_ABSENCE_NOTE,
     configure_logging,
 )
 from plain_sight.sidecars import (
@@ -189,8 +190,8 @@ def _cmd_describe(args: argparse.Namespace, engine: Florence2Engine) -> int:
             "description": text,
             "detail": args.detail,
             "task": DETAIL_TASKS[args.detail],
-            "model_id": engine.model_id,
             "image": args.image,
+            **engine.output_provenance(),
         }, indent=2))
     else:
         print(text)
@@ -201,9 +202,10 @@ def _cmd_ocr(args: argparse.Namespace, engine: Florence2Engine) -> int:
     _announce_load(engine)
     text = engine.ocr(args.image, max_new_tokens=args.max_new_tokens)
     if args.json:
-        print(json.dumps({"text": text, "model_id": engine.model_id, "image": args.image}, indent=2))
+        print(json.dumps({**engine.ocr_envelope(text), "image": args.image}, indent=2))
     else:
         print(text)
+        print(f"plain-sight: [OCR_CAVEAT] {OCR_ABSENCE_NOTE}", file=sys.stderr)
     return 0
 
 
@@ -342,6 +344,7 @@ def _cmd_batch(args: argparse.Namespace, engine: Florence2Engine) -> int:
         "detail": args.detail,
         "out_dir": str(out_dir) if out_dir else None,
         "manifest": str(manifest_path) if manifest_path else None,
+        **engine.output_provenance(),
     }, indent=2))
     if failed == 0:
         return 0

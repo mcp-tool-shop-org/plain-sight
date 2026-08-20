@@ -114,6 +114,12 @@ DETAIL_TASKS = {
     "high": "<MORE_DETAILED_CAPTION>",
 }
 OCR_TASK = "<OCR>"
+# Florence-2 OCR has no absence detector. Do not treat a short string as
+# "no text" and do not ship a 2-sample agreement heuristic as a signal.
+OCR_ABSENCE_NOTE = (
+    "Florence-2 OCR provides no signal that an image contains no text; "
+    "a short result may be invented rather than extracted."
+)
 
 
 class Florence2Engine:
@@ -341,6 +347,33 @@ class Florence2Engine:
         image = self._open_image(path)
         return self._generate(image, OCR_TASK, tokens)
 
+    def resolved_revision(self) -> str | None:
+        """Commit hash of the loaded weights, or None if not loaded / unavailable."""
+        if self._model is None:
+            return None
+        cfg = getattr(self._model, "config", None)
+        return getattr(cfg, "_commit_hash", None)
+
+    def output_provenance(self) -> dict:
+        """Stamp for every structured payload that carries model output.
+
+        New surfaces inherit these keys by calling this method -- do not
+        hand-maintain a list of tools.
+        """
+        return {
+            "model_id": self.model_id,
+            "revision_resolved": self.resolved_revision(),
+        }
+
+    def ocr_envelope(self, text: str) -> dict:
+        """OCR result plus the unconditional absence-of-text caveat."""
+        return {
+            "text": text,
+            **self.output_provenance(),
+            "absence_of_text_unreliable": True,
+            "note": OCR_ABSENCE_NOTE,
+        }
+
     # -- status / selftest ------------------------------------------------------
 
     def status(self) -> dict:
@@ -358,7 +391,7 @@ class Florence2Engine:
             "default_max_new_tokens": DEFAULT_MAX_NEW_TOKENS,
             "detail_tiers": dict(DETAIL_TASKS),
             "revision_requested": self.revision,
-            "revision_resolved": None,
+            "revision_resolved": self.resolved_revision(),
             "python_version": sys.version,
             "torch_version": torch.__version__,
             "transformers_version": transformers.__version__,
@@ -366,8 +399,6 @@ class Florence2Engine:
         if self.loaded:
             param_count = sum(p.numel() for p in self._model.parameters())
             info["parameters"] = f"{param_count / 1e6:.0f}M"
-            cfg = getattr(self._model, "config", None)
-            info["revision_resolved"] = getattr(cfg, "_commit_hash", None)
             if self.device.startswith("cuda") and torch.cuda.is_available():
                 dev = torch.device(self.device)
                 info["vram_mb"] = round(torch.cuda.memory_allocated(dev) / 1024 / 1024)
@@ -426,7 +457,7 @@ class Florence2Engine:
         return {
             "passed": all(c["ok"] for c in checks),
             "checks": checks,
-            "model_id": info["model_id"],
+            **self.output_provenance(),
             "device": info["device"],
             "torch_version": info["torch_version"],
             "transformers_version": info["transformers_version"],

@@ -10,7 +10,7 @@ plain-sight CLI — the dataset-captioning lane from a shell.
 Exit codes: 0 ok · 1 user error (bad input, bad usage) · 2 runtime error
 (model/internal failure, failed selftest) · 3 partial success (batch with
 some failures). Errors print one structured line to stderr:
-``plain-sight: [CODE] message — hint``.
+``plain-sight: [CODE] message -- hint``.
 """
 
 import argparse
@@ -143,7 +143,7 @@ def _cmd_batch(args: argparse.Namespace, engine: Florence2Engine) -> int:
         _err(
             "SIDECAR_COLLISION",
             f"{n} {path_word} claimed by 2+ images",
-            "captioning would silently mislabel training data — resolve the clash or pass --out-dir with unique stems",
+            "captioning would silently mislabel training data -- resolve the clash or pass --out-dir with unique stems",
         )
         for sidecar, claimants in collisions.items():
             names = ", ".join(str(p) for p in claimants)

@@ -243,7 +243,7 @@ class Florence2Engine:
         task = DETAIL_TASKS.get(detail)
         if task is None:
             raise ValueError(
-                f"Unknown detail tier {detail!r} — choose one of: "
+                f"Unknown detail tier {detail!r} -- choose one of: "
                 f"{', '.join(DETAIL_TASKS)}"
             )
         return task

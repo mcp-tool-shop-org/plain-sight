@@ -739,3 +739,135 @@ class TestErrAsciiSeparator:
         with pytest.raises(ValueError) as exc:
             Florence2Engine._validate_detail("ultra")
         str(exc.value).encode("ascii")
+
+
+class TestStageCHelp:
+    """C-04, C-07, C-09: CLI contract is in --help, ASCII, every flag has help.
+
+    Byte-level ASCII would have caught C-07. Walking parser actions would
+    have caught C-09 (batch --detail with empty help).
+    """
+
+    def test_top_level_help_is_ascii_and_has_epilog(self):
+        text = build_parser().format_help()
+        text.encode("ascii")
+        assert "Exit codes" in text
+        assert "stderr" in text
+        assert "stdout" in text
+
+    def test_batch_help_mentions_skip_and_hours(self):
+        sub = build_parser()._subparsers._group_actions[0].choices["batch"]
+        text = sub.format_help()
+        text.encode("ascii")
+        assert "--overwrite" in text
+        assert "hours" in text.lower() or "skipped" in text.lower()
+
+    def test_every_flag_has_help(self):
+        parser = build_parser()
+        sub = parser._subparsers._group_actions[0]
+        for name, sp in sub.choices.items():
+            for action in sp._actions:
+                if action.option_strings and action.option_strings != ["-h", "--help"]:
+                    assert action.help, f"{name} {action.option_strings} has no help"
+                    action.help.encode("ascii")
+
+    def test_missing_command_points_at_help(self, capsys):
+        with pytest.raises(SystemExit) as exc:
+            build_parser().parse_args([])
+        assert exc.value.code == 1
+        err = capsys.readouterr().err
+        assert "--help" in err
+        assert "describe" in err
+
+
+class TestStageCLoadAnnouncement:
+    """C-01 + C-05: default-verbosity stderr before first describe.
+
+    Would have caught: 11s of silence, and the stall after 800 skipped files.
+    """
+
+    def test_describe_announces_before_loader(self, tmp_path, monkeypatch, capsys):
+        img = tmp_path / "a.png"
+        img.write_bytes(b"stub")
+        order = []
+
+        def fake_describe(self, *a, **k):
+            order.append("describe")
+            return "caption"
+
+        monkeypatch.setattr("plain_sight.cli.Florence2Engine.describe", fake_describe)
+        monkeypatch.setattr(
+            "plain_sight.cli.Florence2Engine._ensure_loaded",
+            lambda self: order.append("load"),
+        )
+        code = main(["describe", str(img)])
+        err = capsys.readouterr().err
+        assert code == 0
+        assert "loading" in err.lower()
+        assert "1.5 GB" in err
+        assert order[0] == "describe"
+
+    def test_batch_announces_before_skips_finish(self, tmp_path, monkeypatch, capsys):
+        skip_img = tmp_path / "a.png"
+        work_img = tmp_path / "b.png"
+        skip_img.write_bytes(b"stub")
+        work_img.write_bytes(b"stub")
+        (tmp_path / "a.txt").write_text("old", encoding="utf-8")
+        calls = []
+
+        def fake_describe(self, image_path, detail="high", max_new_tokens=None):
+            calls.append(image_path)
+            return "caption"
+
+        monkeypatch.setattr("plain_sight.cli.Florence2Engine.describe", fake_describe)
+        code = main(["batch", str(tmp_path)])
+        err = capsys.readouterr().err
+        assert code == 0
+        assert "loading" in err.lower()
+        assert err.lower().index("loading") < err.find("[") if "[" in err else True
+        assert len(calls) == 1
+        assert "skip (exists)" not in err
+        assert "[heartbeat]" in err
+
+
+class TestStageCDryRun:
+    """C-03: --dry-run loads nothing, writes nothing; collisions still exit 1."""
+
+    def test_dry_run_writes_nothing(self, tmp_path, monkeypatch, capsys):
+        img = tmp_path / "a.png"
+        img.write_bytes(b"stub")
+        monkeypatch.setattr(
+            "plain_sight.cli.Florence2Engine.describe",
+            lambda self, *a, **k: (_ for _ in ()).throw(RuntimeError("no load")),
+        )
+        monkeypatch.setattr(
+            "plain_sight.cli.Florence2Engine._ensure_loaded",
+            lambda self: (_ for _ in ()).throw(RuntimeError("no load")),
+        )
+        code = main(["batch", str(img), "--dry-run"])
+        out = capsys.readouterr().out
+        assert code == 0
+        payload = json.loads(out)
+        assert payload["dry_run"] is True
+        assert payload["would_write"] == 1
+        assert payload["would_skip"] == 0
+        assert list(tmp_path.glob("*.txt")) == []
+
+    def test_dry_run_collision_still_exits_1(self, tmp_path, capsys):
+        (tmp_path / "img.png").write_bytes(b"stub")
+        (tmp_path / "img.jpg").write_bytes(b"stub")
+        code = main(["batch", str(tmp_path), "--dry-run"])
+        err = capsys.readouterr().err
+        assert code == 1
+        assert "SIDECAR_COLLISION" in err
+        assert list(tmp_path.glob("*.txt")) == []
+
+
+class TestStageCMcpBatchDuration:
+    """C-06: describe_batch's description discloses the wait."""
+
+    def test_describe_batch_doc_mentions_duration(self):
+        import plain_sight.server as server_mod
+        doc = server_mod.describe_batch.__doc__
+        assert "1-2" in doc or "1–2" in doc
+        assert "overwrite" in doc.lower()

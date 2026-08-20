@@ -25,8 +25,13 @@ print('tools:', ', '.join(names))
 "
 
 echo "== 3/4 CI-safe tests =="
-# Project-local basetemp: immune to stale/broken system temp dirs.
-python -m pytest -m "not dogfood" -q --basetemp .pytest-tmp
+# Relocate pytest's temp root. --basetemp is not used: pytest deletes that
+# directory at every session start, which bricked the suite (Wave 1 PS-006).
+# PYTEST_DEBUG_TEMPROOT has no wipe-on-start semantics. mkdir first — pytest
+# does not create the parent.
+mkdir -p .pytest-temproot
+export PYTEST_DEBUG_TEMPROOT="$(pwd)/.pytest-temproot"
+python -m pytest -m "not dogfood" -q
 
 echo "== 4/4 build =="
 python -m build >/dev/null

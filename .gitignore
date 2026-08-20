@@ -7,6 +7,7 @@ dist/
 build/
 .pytest_cache/
 .pytest-tmp/
+.pytest-temproot/
 outputs/
 .env
 site/.astro/

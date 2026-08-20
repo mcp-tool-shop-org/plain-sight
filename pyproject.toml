@@ -1,0 +1,46 @@
+[project]
+name = "plain-sight"
+version = "0.1.0"
+description = "Generative image describer MCP server + CLI — an AI says what it sees (Florence-2)"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+keywords = ["mcp", "vision", "florence-2", "image-captioning", "dataset-captioning", "ocr"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Image Recognition",
+]
+authors = [
+    { name = "mcp-tool-shop", email = "64996768+mcp-tool-shop@users.noreply.github.com" },
+]
+dependencies = [
+    "fastmcp>=3.0",
+    "torch>=2.1",
+    "transformers>=4.51",
+    "pillow>=10.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "build"]
+
+[project.scripts]
+plain-sight = "plain_sight.cli:main"
+plain-sight-mcp = "plain_sight.server:main"
+
+[project.urls]
+Repository = "https://github.com/mcp-tool-shop-org/plain-sight"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/plain_sight"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "dogfood: requires the Florence-2 model and a GPU (not CI-safe)",
+]

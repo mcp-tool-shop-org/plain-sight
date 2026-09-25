@@ -1,0 +1,193 @@
+{
+  "authored": [
+    ".github/",
+    "root",
+    "site/"
+  ],
+  "breaks": [
+    {
+      "doors": 3,
+      "importedBy": [],
+      "importedByTests": [
+        "tests"
+      ],
+      "kind": "part",
+      "name": "src",
+      "partLabel": "src"
+    }
+  ],
+  "changes": {
+    "first": true
+  },
+  "changesTogether": [],
+  "changesTogetherNote": [
+    "Window: 180 days; a pair counts from 3 shared commits, since the window holds fewer than 30 qualifying commits."
+  ],
+  "changesTogetherWithTests": 0,
+  "commit": "953ac4e250c0372285999118b6ef5e51fb67786c",
+  "defaultBranch": "main",
+  "derived": "5 parts, mostly Python (9 files), TypeScript (2) and JavaScript (1). Work enters through 4 doors; the busiest is CI, which reaches 2 parts. People run plain-sight and plain-sight-mcp.",
+  "doors": [
+    {
+      "checks": [],
+      "checksCount": 0,
+      "checksMore": 0,
+      "file": ".github/workflows/ci.yml",
+      "id": ".github/workflows/ci.yml",
+      "landings": [],
+      "name": "CI",
+      "pushes": false,
+      "reach": [
+        {
+          "boundary": "src",
+          "depth": 0,
+          "files": 5
+        },
+        {
+          "boundary": "tests",
+          "depth": 0,
+          "files": 3
+        }
+      ],
+      "runs": [
+        "src/plain_sight/engine.py",
+        "src/plain_sight/server.py",
+        "tests/"
+      ],
+      "runsCount": 3,
+      "runsMore": 0,
+      "sends": [],
+      "stages": [],
+      "triggers": [
+        "on a pull request touching 8 paths",
+        "on a push touching 8 paths",
+        "or by hand"
+      ]
+    },
+    {
+      "checks": [],
+      "checksCount": 0,
+      "checksMore": 0,
+      "file": ".github/workflows/pages.yml",
+      "id": ".github/workflows/pages.yml",
+      "landings": [],
+      "name": "Deploy site to GitHub Pages",
+      "pushes": false,
+      "reach": [
+        {
+          "boundary": "site",
+          "depth": 0,
+          "files": 3
+        }
+      ],
+      "runs": [
+        "site/astro.config.mjs",
+        "site/src/"
+      ],
+      "runsCount": 2,
+      "runsMore": 0,
+      "sends": [
+        "deploys the site"
+      ],
+      "stages": [],
+      "triggers": [
+        "on a push to main touching 2 paths",
+        "or by hand"
+      ]
+    },
+    {
+      "checks": [],
+      "checksCount": 0,
+      "checksMore": 0,
+      "file": "pyproject.toml",
+      "id": "pyproject.toml#plain-sight",
+      "kind": "command",
+      "landings": [],
+      "name": "plain-sight",
+      "pushes": false,
+      "reach": [
+        {
+          "boundary": "src",
+          "depth": 0,
+          "files": 4
+        }
+      ],
+      "runs": [
+        "src/plain_sight/cli.py"
+      ],
+      "runsCount": 1,
+      "runsMore": 0,
+      "sends": [],
+      "stages": [],
+      "triggers": []
+    },
+    {
+      "checks": [],
+      "checksCount": 0,
+      "checksMore": 0,
+      "file": "pyproject.toml",
+      "id": "pyproject.toml#plain-sight-mcp",
+      "kind": "command",
+      "landings": [],
+      "name": "plain-sight-mcp",
+      "pushes": false,
+      "reach": [
+        {
+          "boundary": "src",
+          "depth": 0,
+          "files": 4
+        }
+      ],
+      "runs": [
+        "src/plain_sight/server.py"
+      ],
+      "runsCount": 1,
+      "runsMore": 0,
+      "sends": [],
+      "stages": [],
+      "triggers": []
+    }
+  ],
+  "duplicates": [],
+  "duplicatesLead": null,
+  "duplicatesNote": [],
+  "edges": [],
+  "generated": [],
+  "generatedAt": "2026-09-25T09:43:26.784Z",
+  "limits": [
+    "2 writes and 1 read use paths built at run time and are not named here.",
+    "Statistics confidence is low: fewer than 30 qualifying commits in the window, and fewer than 20 source files reach 10 revisions."
+  ],
+  "mainDoor": ".github/workflows/ci.yml",
+  "partLabels": {
+    ".github": ".github",
+    "root": "the repository root",
+    "site": "the site",
+    "src": "src",
+    "tests": "tests"
+  },
+  "parts": 5,
+  "readers": [],
+  "repo": "mcp-tool-shop-org/plain-sight",
+  "sequences": [],
+  "startDoor": ".github/workflows/ci.yml",
+  "startHere": [
+    ".github/workflows/ci.yml",
+    "src/plain_sight/server.py",
+    "src/plain_sight/engine.py",
+    "src/plain_sight/sidecars.py"
+  ],
+  "summary": null,
+  "summaryFrom": null,
+  "testFiles": 3,
+  "testedBy": {
+    "src": 3
+  },
+  "unnamedWrites": 2,
+  "unread": [],
+  "unreadFiles": 0,
+  "unreadNote": [],
+  "untested": [],
+  "untestedNote": [],
+  "written": 0
+}

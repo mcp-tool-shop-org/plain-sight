@@ -1,0 +1,1419 @@
+{
+  "boundaries": [
+    {
+      "dynamicReads": 0,
+      "dynamicSpawns": 0,
+      "dynamicSpawnsInTests": 0,
+      "dynamicWrites": 0,
+      "entryPoints": [],
+      "externals": 0,
+      "files": [
+        {
+          "hash": "f34297b9b4b0da59a44b72e72e08d9f9561d7c78a1db218be0ff8141d027f58f",
+          "path": ".github/workflows/ci.yml"
+        },
+        {
+          "hash": "fe1db5f18ca42c6e2363f0860db9c117b03a6bff39b375189f7c9d2f1882b4a1",
+          "path": ".github/workflows/pages.yml"
+        }
+      ],
+      "globs": [
+        ".github/**"
+      ],
+      "importConfidence": "full",
+      "name": ".github",
+      "origin": "authored",
+      "role": "config",
+      "testedBy": 0,
+      "unresolvedSites": 0
+    },
+    {
+      "dynamicReads": 0,
+      "dynamicSpawns": 0,
+      "dynamicSpawnsInTests": 0,
+      "dynamicWrites": 0,
+      "entryPoints": [],
+      "externals": 0,
+      "files": [
+        {
+          "hash": "875a20b5a76b86a9bcc56f697d9fe76ee75aee55e716588c6e98eb1ef2139b56",
+          "path": ".gitignore"
+        },
+        {
+          "hash": "c4926e4eec0d659a95a712888e6d382ec02e20521e675d74562311ca7a00e371",
+          "path": "CHANGELOG.md"
+        },
+        {
+          "hash": "367e5141e4f5884e5791c4021f33a9faa958840a5decf44e1b273a87aad1c459",
+          "path": "LICENSE"
+        },
+        {
+          "hash": "771dda3df558586183770207dcc53b9c620f8f5de407e52fa8275453184490af",
+          "path": "README.es.md"
+        },
+        {
+          "hash": "77e456b101cc19f32c9170d0b1c9b35ca00b5402a01770d42d0f1ef3048537c7",
+          "path": "README.fr.md"
+        },
+        {
+          "hash": "2b61e82c7c6410a0f7741b9363f2b3a34a2bb4a662ed604024e5f08bf2dba12f",
+          "path": "README.hi.md"
+        },
+        {
+          "hash": "bbc9f3312622bcb3a1a32e3a633a35e544a412bf22eda210926ad40a013d077e",
+          "path": "README.it.md"
+        },
+        {
+          "hash": "c70ee3cb337dfaae38c6aee558eb07196f97ec692c7e3dcd70d9ffa6715da4af",
+          "path": "README.ja.md"
+        },
+        {
+          "hash": "5d55ca0a5f4b8e347e189cfdbc502cc6394d44eb39d258b91d31f7ebc4162a9f",
+          "path": "README.md"
+        },
+        {
+          "hash": "adc7c616f2c7f99a0a3fb59d10d99070d0e483ab6dcf2e0e686b98027d9fec33",
+          "path": "README.pt-BR.md"
+        },
+        {
+          "hash": "d3ed6d51f076f114b233642e60ca5ec61eb3049da3977ceef5df418b0a5a48b7",
+          "path": "README.zh.md"
+        },
+        {
+          "hash": "a62227b3789e24125aaac335e63f4423490c8888eb5a00b304386ff3f0e2c321",
+          "path": "SCORECARD.md"
+        },
+        {
+          "hash": "1c36bf2ecc01a4cf316ab5094d81b787325bb33c931d929dd93a46b9df69eab6",
+          "path": "SECURITY.md"
+        },
+        {
+          "hash": "b420fedaa57d4cd0c5a58482a6a44269b2999871e08ab0219c91c79a4fbbdb5f",
+          "path": "SHIP_GATE.md"
+        },
+        {
+          "hash": "ac81a6daf605967d22fcae889738c8009359c956a67ac37add84e9aab6b668a7",
+          "path": "pyproject.toml"
+        },
+        {
+          "hash": "955ad2f59fe0e2ba7f03c1cc437efcbeb9b6062a23444089067016966cfe30b1",
+          "path": "verify.sh"
+        }
+      ],
+      "globs": [
+        "*"
+      ],
+      "importConfidence": "full",
+      "name": "root",
+      "origin": "authored",
+      "role": "config",
+      "testedBy": 0,
+      "unresolvedSites": 0
+    },
+    {
+      "dynamicReads": 0,
+      "dynamicSpawns": 0,
+      "dynamicSpawnsInTests": 0,
+      "dynamicWrites": 0,
+      "entryPoints": [],
+      "externals": 0,
+      "files": [
+        {
+          "hash": "8dc2fdd58d6f2c8f70fb1a14c78ffc24c40f941eab14efc0240af12a62a0d15e",
+          "path": "site/astro.config.mjs"
+        },
+        {
+          "hash": "af5d4f54dca60686724d306eb58759fb25b6f5ba4d66559ab84a968112a184e5",
+          "path": "site/package-lock.json"
+        },
+        {
+          "hash": "ede5fe47605b55555e8d3ed7b2eb904e0c9b03a975348882ae0a870ef5b98bb7",
+          "path": "site/package.json"
+        },
+        {
+          "hash": "99a01f848bc6a3f6f0c5320db095d6404d948afa9fb7ffd5c8295f3610c8b8c3",
+          "path": "site/src/assets/logo.png"
+        },
+        {
+          "constantOnly": true,
+          "hash": "ee756dfba4122d2acc94a39b2555d9f200fff56a87a8c0b10f9cd01df26a8b62",
+          "path": "site/src/content.config.ts"
+        },
+        {
+          "hash": "786b1b2f4a40bc982c1ea4cb2e35fff3f283f71960ff5228ad2edc649e2ac44e",
+          "path": "site/src/content/docs/handbook/configuration.md"
+        },
+        {
+          "hash": "3cc5952557ef1c3c2e8fc6743015d2456778fbe7569f94e0fc043cfcd126c2ce",
+          "path": "site/src/content/docs/handbook/getting-started.md"
+        },
+        {
+          "hash": "b66bf79bbf7171e9153d92d187385ebc1f79a07b3a275fc0a0733d5465c6fbb9",
+          "path": "site/src/content/docs/handbook/index.md"
+        },
+        {
+          "hash": "d41ac804d557012bbb095a27c18139ddbd7009d75809c48278f664911bacf741",
+          "path": "site/src/content/docs/handbook/reference.md"
+        },
+        {
+          "hash": "f3d035b5f6eec558d5a5e8c569d414baa4ace766cd61f4c1707f614971fb944f",
+          "path": "site/src/content/docs/handbook/security.md"
+        },
+        {
+          "hash": "e3bce655726396ba6273d94ed5d848c67fbdfe4ca91626664c224656f33026a3",
+          "path": "site/src/content/docs/handbook/usage.md"
+        },
+        {
+          "hash": "391533713539035d3c92282579d43de0f137067867fdb502d7eaea3c74601d2a",
+          "path": "site/src/pages/index.astro"
+        },
+        {
+          "constantOnly": true,
+          "hash": "f30cdfdce9b0c56cf37a61caacc0a11afaa428f5b4f1cbb6e2ddeda90b9524f4",
+          "path": "site/src/site-config.ts"
+        },
+        {
+          "hash": "29ee8df91833e694bdba973126b34a6177de4cf01dab6d9ef7d3126e8e2b67fb",
+          "path": "site/src/styles/global.css"
+        },
+        {
+          "hash": "b17173f07c0db8b532533b5de48035355a12d9582f0918d75b12214b07d53a17",
+          "path": "site/src/styles/starlight-custom.css"
+        },
+        {
+          "hash": "b5b0a5b04a14cddd7713c5e1c82e86c79c17c2f86b170e26e9b170b3d5e01cd9",
+          "path": "site/tsconfig.json"
+        }
+      ],
+      "globs": [
+        "site/**"
+      ],
+      "importConfidence": "full",
+      "name": "site",
+      "origin": "authored",
+      "role": "site",
+      "testedBy": 0,
+      "unresolvedSites": 0
+    },
+    {
+      "dynamicReads": 1,
+      "dynamicSpawns": 0,
+      "dynamicSpawnsInTests": 0,
+      "dynamicWrites": 2,
+      "entryPoints": [
+        "src/plain_sight/cli.py",
+        "src/plain_sight/server.py"
+      ],
+      "externals": 0,
+      "files": [
+        {
+          "hash": "5a1e2d9ac55b9de1655a57aecdce8fb48776b5ee601aba5311572eb252c3cd8e",
+          "path": "src/plain_sight/__init__.py"
+        },
+        {
+          "hash": "55c2931e18a68f051f848f75048eee319f1672c6e1d06eacdbd1444f62c8ea58",
+          "importsFiles": [
+            "src/plain_sight/server.py"
+          ],
+          "path": "src/plain_sight/__main__.py"
+        },
+        {
+          "hash": "070e679401206e4eb239cb63d9c49e10ad92cfcb8987c742f70d75f6253d5ae2",
+          "path": "src/plain_sight/assets/selftest/cheetah.jpg"
+        },
+        {
+          "hash": "64933dd3380fd2abc7df436876b7e414ddf642b27d402664581a56647d29dc54",
+          "path": "src/plain_sight/assets/selftest/knight.png"
+        },
+        {
+          "entry": "main",
+          "entryRule": 0,
+          "exports": [
+            "build_parser",
+            "main"
+          ],
+          "hash": "af1119a2c9190ddd7711d22b3f37ecdcd07947fddd552d364402d814a782e940",
+          "importsFiles": [
+            "src/plain_sight/__init__.py",
+            "src/plain_sight/engine.py",
+            "src/plain_sight/sidecars.py"
+          ],
+          "path": "src/plain_sight/cli.py",
+          "sequences": [
+            {
+              "calls": [
+                {
+                  "line": 86,
+                  "name": "DETAIL_TASKS",
+                  "passed": true,
+                  "target": {
+                    "file": "src/plain_sight/engine.py"
+                  }
+                }
+              ],
+              "exported": true,
+              "invokedAtTopLevel": false,
+              "isDefaultExport": false,
+              "name": "build_parser"
+            },
+            {
+              "calls": [
+                {
+                  "line": 177,
+                  "name": "sidecar_path_for",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  }
+                },
+                {
+                  "line": 178,
+                  "name": "sidecar_is_complete",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  }
+                }
+              ],
+              "exported": false,
+              "invokedAtTopLevel": false,
+              "isDefaultExport": false,
+              "name": "_plan_counts"
+            },
+            {
+              "calls": [
+                {
+                  "line": 187,
+                  "name": "describe",
+                  "target": null
+                },
+                {
+                  "line": 194,
+                  "name": "output_provenance",
+                  "target": null
+                }
+              ],
+              "exported": false,
+              "invokedAtTopLevel": false,
+              "isDefaultExport": false,
+              "name": "_cmd_describe"
+            },
+            {
+              "calls": [
+                {
+                  "line": 203,
+                  "name": "ocr",
+                  "target": null
+                },
+                {
+                  "line": 205,
+                  "name": "ocr_envelope",
+                  "target": null
+                }
+              ],
+              "exported": false,
+              "invokedAtTopLevel": false,
+              "isDefaultExport": false,
+              "name": "_cmd_ocr"
+            },
+            {
+              "calls": [
+                {
+                  "line": 215,
+                  "name": "iter_image_files",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  }
+                },
+                {
+                  "line": 222,
+                  "name": "find_sidecar_collisions",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  }
+                },
+                {
+                  "line": 238,
+                  "name": "manifest_collides_with_sidecars",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  }
+                },
+                {
+                  "line": 177,
+                  "name": "sidecar_path_for",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  },
+                  "via": "_plan_counts"
+                },
+                {
+                  "line": 178,
+                  "name": "sidecar_is_complete",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  },
+                  "via": "_plan_counts"
+                },
+                {
+                  "line": 278,
+                  "name": "sidecar_path_for",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  }
+                },
+                {
+                  "line": 279,
+                  "name": "sidecar_is_complete",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  }
+                },
+                {
+                  "line": 288,
+                  "name": "describe",
+                  "target": null
+                },
+                {
+                  "line": 292,
+                  "name": "compose_caption",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  }
+                },
+                {
+                  "line": 291,
+                  "name": "write_sidecar_atomic",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  }
+                },
+                {
+                  "line": 317,
+                  "name": "status",
+                  "target": null
+                },
+                {
+                  "line": 318,
+                  "name": "write_batch_manifest",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  }
+                },
+                {
+                  "line": 347,
+                  "name": "output_provenance",
+                  "target": null
+                }
+              ],
+              "exported": false,
+              "invokedAtTopLevel": false,
+              "isDefaultExport": false,
+              "name": "_cmd_batch"
+            },
+            {
+              "calls": [
+                {
+                  "line": 355,
+                  "name": "status",
+                  "target": null
+                }
+              ],
+              "exported": false,
+              "invokedAtTopLevel": false,
+              "isDefaultExport": false,
+              "name": "_cmd_status"
+            },
+            {
+              "calls": [
+                {
+                  "line": 360,
+                  "name": "selftest",
+                  "target": null
+                }
+              ],
+              "exported": false,
+              "invokedAtTopLevel": false,
+              "isDefaultExport": false,
+              "name": "_cmd_selftest"
+            },
+            {
+              "calls": [
+                {
+                  "line": 366,
+                  "name": "configure_logging",
+                  "target": {
+                    "file": "src/plain_sight/engine.py"
+                  }
+                },
+                {
+                  "line": 86,
+                  "name": "DETAIL_TASKS",
+                  "passed": true,
+                  "target": {
+                    "file": "src/plain_sight/engine.py"
+                  },
+                  "via": "build_parser"
+                },
+                {
+                  "line": 369,
+                  "name": "Florence2Engine",
+                  "target": {
+                    "file": "src/plain_sight/engine.py"
+                  }
+                },
+                {
+                  "line": 187,
+                  "name": "describe",
+                  "target": null,
+                  "via": "_cmd_describe"
+                },
+                {
+                  "line": 194,
+                  "name": "output_provenance",
+                  "target": null,
+                  "via": "_cmd_describe"
+                },
+                {
+                  "line": 203,
+                  "name": "ocr",
+                  "target": null,
+                  "via": "_cmd_ocr"
+                },
+                {
+                  "line": 205,
+                  "name": "ocr_envelope",
+                  "target": null,
+                  "via": "_cmd_ocr"
+                },
+                {
+                  "line": 215,
+                  "name": "iter_image_files",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  },
+                  "via": "_cmd_batch"
+                },
+                {
+                  "line": 222,
+                  "name": "find_sidecar_collisions",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  },
+                  "via": "_cmd_batch"
+                },
+                {
+                  "line": 238,
+                  "name": "manifest_collides_with_sidecars",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  },
+                  "via": "_cmd_batch"
+                },
+                {
+                  "line": 177,
+                  "name": "sidecar_path_for",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  },
+                  "via": "_plan_counts"
+                },
+                {
+                  "line": 178,
+                  "name": "sidecar_is_complete",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  },
+                  "via": "_plan_counts"
+                },
+                {
+                  "line": 278,
+                  "name": "sidecar_path_for",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  },
+                  "via": "_cmd_batch"
+                },
+                {
+                  "line": 279,
+                  "name": "sidecar_is_complete",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  },
+                  "via": "_cmd_batch"
+                },
+                {
+                  "line": 288,
+                  "name": "describe",
+                  "target": null,
+                  "via": "_cmd_batch"
+                },
+                {
+                  "line": 292,
+                  "name": "compose_caption",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  },
+                  "via": "_cmd_batch"
+                },
+                {
+                  "line": 291,
+                  "name": "write_sidecar_atomic",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  },
+                  "via": "_cmd_batch"
+                },
+                {
+                  "line": 317,
+                  "name": "status",
+                  "target": null,
+                  "via": "_cmd_batch"
+                },
+                {
+                  "line": 318,
+                  "name": "write_batch_manifest",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  },
+                  "via": "_cmd_batch"
+                },
+                {
+                  "line": 347,
+                  "name": "output_provenance",
+                  "target": null,
+                  "via": "_cmd_batch"
+                },
+                {
+                  "line": 355,
+                  "name": "status",
+                  "target": null,
+                  "via": "_cmd_status"
+                },
+                {
+                  "line": 360,
+                  "name": "selftest",
+                  "target": null,
+                  "via": "_cmd_selftest"
+                }
+              ],
+              "exported": true,
+              "invokedAtTopLevel": true,
+              "isDefaultExport": false,
+              "name": "main"
+            }
+          ]
+        },
+        {
+          "exports": [
+            "configure_logging"
+          ],
+          "hash": "844e262d4811511be03649d4abb87fb788cec3ec26064d75f15d485625083df1",
+          "importsFiles": [
+            "src/plain_sight/__init__.py"
+          ],
+          "path": "src/plain_sight/engine.py"
+        },
+        {
+          "entry": "main",
+          "entryRule": 0,
+          "exports": [
+            "describe_batch",
+            "describe_image",
+            "main",
+            "read_text",
+            "sight_selftest",
+            "sight_status"
+          ],
+          "hash": "52ce0f9f1a8e3752fd38a9c6e81995ea60875401cda9564ba1a44df21d8bb635",
+          "importsFiles": [
+            "src/plain_sight/engine.py",
+            "src/plain_sight/sidecars.py"
+          ],
+          "path": "src/plain_sight/server.py",
+          "sequences": [
+            {
+              "calls": [
+                {
+                  "line": 127,
+                  "name": "_ensure_loaded",
+                  "receiver": "Florence2Engine",
+                  "target": {
+                    "file": "src/plain_sight/engine.py"
+                  }
+                }
+              ],
+              "exported": false,
+              "invokedAtTopLevel": false,
+              "isDefaultExport": false,
+              "name": "_ensure_model"
+            },
+            {
+              "calls": [
+                {
+                  "line": 156,
+                  "name": "_validate_detail",
+                  "receiver": "Florence2Engine",
+                  "target": {
+                    "file": "src/plain_sight/engine.py"
+                  }
+                },
+                {
+                  "line": 157,
+                  "name": "_validate_max_new_tokens",
+                  "receiver": "Florence2Engine",
+                  "target": {
+                    "file": "src/plain_sight/engine.py"
+                  }
+                },
+                {
+                  "line": 158,
+                  "name": "_validate_image_path",
+                  "receiver": "Florence2Engine",
+                  "target": {
+                    "file": "src/plain_sight/engine.py"
+                  }
+                },
+                {
+                  "line": 127,
+                  "name": "_ensure_loaded",
+                  "receiver": "Florence2Engine",
+                  "target": {
+                    "file": "src/plain_sight/engine.py"
+                  },
+                  "via": "_ensure_model"
+                },
+                {
+                  "line": 163,
+                  "name": "describe",
+                  "receiver": "Florence2Engine",
+                  "target": {
+                    "file": "src/plain_sight/engine.py"
+                  }
+                },
+                {
+                  "line": 175,
+                  "name": "output_provenance",
+                  "receiver": "Florence2Engine",
+                  "target": {
+                    "file": "src/plain_sight/engine.py"
+                  }
+                }
+              ],
+              "exported": true,
+              "invokedAtTopLevel": false,
+              "isDefaultExport": false,
+              "name": "describe_image"
+            },
+            {
+              "calls": [
+                {
+                  "line": 206,
+                  "name": "_validate_detail",
+                  "receiver": "Florence2Engine",
+                  "target": {
+                    "file": "src/plain_sight/engine.py"
+                  }
+                },
+                {
+                  "line": 207,
+                  "name": "_validate_max_new_tokens",
+                  "receiver": "Florence2Engine",
+                  "target": {
+                    "file": "src/plain_sight/engine.py"
+                  }
+                },
+                {
+                  "line": 222,
+                  "name": "find_sidecar_collisions",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  }
+                },
+                {
+                  "line": 238,
+                  "name": "manifest_collides_with_sidecars",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  }
+                },
+                {
+                  "line": 127,
+                  "name": "_ensure_loaded",
+                  "receiver": "Florence2Engine",
+                  "target": {
+                    "file": "src/plain_sight/engine.py"
+                  },
+                  "via": "_ensure_model"
+                },
+                {
+                  "line": 250,
+                  "name": "sidecar_path_for",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  }
+                },
+                {
+                  "line": 251,
+                  "name": "sidecar_is_complete",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  }
+                },
+                {
+                  "line": 257,
+                  "name": "describe",
+                  "receiver": "Florence2Engine",
+                  "target": {
+                    "file": "src/plain_sight/engine.py"
+                  }
+                },
+                {
+                  "line": 258,
+                  "name": "compose_caption",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  }
+                },
+                {
+                  "line": 261,
+                  "name": "write_sidecar_atomic",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  }
+                },
+                {
+                  "line": 294,
+                  "name": "status",
+                  "receiver": "Florence2Engine",
+                  "target": {
+                    "file": "src/plain_sight/engine.py"
+                  }
+                },
+                {
+                  "line": 295,
+                  "name": "write_batch_manifest",
+                  "target": {
+                    "file": "src/plain_sight/sidecars.py"
+                  }
+                },
+                {
+                  "line": 330,
+                  "name": "output_provenance",
+                  "receiver": "Florence2Engine",
+                  "target": {
+                    "file": "src/plain_sight/engine.py"
+                  }
+                }
+              ],
+              "exported": true,
+              "invokedAtTopLevel": false,
+              "isDefaultExport": false,
+              "name": "describe_batch"
+            },
+            {
+              "calls": [
+                {
+                  "line": 347,
+                  "name": "_validate_max_new_tokens",
+                  "receiver": "Florence2Engine",
+                  "target": {
+                    "file": "src/plain_sight/engine.py"
+                  }
+                },
+                {
+                  "line": 348,
+                  "name": "_validate_image_path",
+                  "receiver": "Florence2Engine",
+                  "target": {
+                    "file": "src/plain_sight/engine.py"
+                  }
+                },
+                {
+                  "line": 127,
+                  "name": "_ensure_loaded",
+                  "receiver": "Florence2Engine",
+                  "target": {
+                    "file": "src/plain_sight/engine.py"
+                  },
+                  "via": "_ensure_model"
+                },
+                {
+                  "line": 353,
+                  "name": "ocr",
+                  "receiver": "Florence2Engine",
+                  "target": {
+                    "file": "src/plain_sight/engine.py"
+                  }
+                },
+                {
+                  "line": 360,
+                  "name": "ocr_envelope",
+                  "receiver": "Florence2Engine",
+                  "target": {
+                    "file": "src/plain_sight/engine.py"
+                  }
+                }
+              ],
+              "exported": true,
+              "invokedAtTopLevel": false,
+              "isDefaultExport": false,
+              "name": "read_text"
+            },
+            {
+              "calls": [
+                {
+                  "line": 374,
+                  "name": "status",
+                  "receiver": "Florence2Engine",
+                  "target": {
+                    "file": "src/plain_sight/engine.py"
+                  }
+                }
+              ],
+              "exported": true,
+              "invokedAtTopLevel": false,
+              "isDefaultExport": false,
+              "name": "sight_status"
+            },
+            {
+              "calls": [
+                {
+                  "line": 403,
+                  "name": "selftest",
+                  "receiver": "Florence2Engine",
+                  "target": {
+                    "file": "src/plain_sight/engine.py"
+                  }
+                }
+              ],
+              "exported": true,
+              "invokedAtTopLevel": false,
+              "isDefaultExport": false,
+              "name": "sight_selftest"
+            }
+          ]
+        },
+        {
+          "exports": [
+            "compose_caption",
+            "find_sidecar_collisions",
+            "iter_image_files",
+            "manifest_collides_with_sidecars",
+            "sidecar_is_complete",
+            "sidecar_path_for",
+            "write_batch_manifest",
+            "write_sidecar_atomic"
+          ],
+          "hash": "e633e1bcadf88f6cf1c1a54cd95607871292122d4e950fda76f76f892362bb0a",
+          "path": "src/plain_sight/sidecars.py"
+        }
+      ],
+      "globs": [
+        "src/**"
+      ],
+      "importConfidence": "full",
+      "name": "src",
+      "origin": "authored",
+      "role": "code",
+      "testedBy": 3,
+      "unresolvedSites": 0
+    },
+    {
+      "dynamicReads": 0,
+      "dynamicSpawns": 0,
+      "dynamicSpawnsInTests": 0,
+      "dynamicWrites": 0,
+      "entryPoints": [],
+      "externals": 0,
+      "files": [
+        {
+          "exports": [
+            "cheetah_jpg",
+            "cold_engine",
+            "engine",
+            "knight_png",
+            "make_text_image",
+            "text_image"
+          ],
+          "hash": "8cb61106310245f0827d1fa3d69a635d5535aef7e12df9b18d34ed79eb1883c1",
+          "importsFiles": [
+            "src/plain_sight/engine.py"
+          ],
+          "path": "tests/conftest.py"
+        },
+        {
+          "hash": "2f318c42450044326f2d9eecae6d4c9c6099cc21d1fe9db63880c2be337d69c5",
+          "importsFiles": [
+            "src/plain_sight/sidecars.py"
+          ],
+          "path": "tests/test_dogfood.py"
+        },
+        {
+          "exports": [
+            "restore_logger"
+          ],
+          "hash": "65396a5a4c74be8b6dbf377690982f29514794c9028ddaf5afb0c58c6e2600d8",
+          "importOrder": [
+            "src/plain_sight/engine.py",
+            "src/plain_sight/cli.py",
+            "src/plain_sight/sidecars.py",
+            "src/plain_sight/server.py",
+            "tests/conftest.py"
+          ],
+          "importsFiles": [
+            "src/plain_sight/cli.py",
+            "src/plain_sight/engine.py",
+            "src/plain_sight/server.py",
+            "src/plain_sight/sidecars.py",
+            "tests/conftest.py"
+          ],
+          "path": "tests/test_edge_cases.py"
+        }
+      ],
+      "globs": [
+        "tests/**"
+      ],
+      "importConfidence": "full",
+      "name": "tests",
+      "origin": "authored",
+      "role": "test",
+      "testedBy": 0,
+      "unresolvedSites": 0
+    }
+  ],
+  "doors": [
+    {
+      "checksCount": 0,
+      "commands": [
+        {
+          "job": "test",
+          "step": "Atlas check",
+          "text": "npx --yes @dogfood-lab/atlas@1.21.0 check"
+        },
+        {
+          "job": "test",
+          "step": "Install dependencies",
+          "text": "pip install -e \".[dev]\""
+        },
+        {
+          "job": "test",
+          "step": "Dependency scan (advisory)",
+          "text": "pip install pip-audit\npip-audit\n"
+        },
+        {
+          "job": "test",
+          "step": "Verify imports and tool registration",
+          "text": "echo \"[1/3] Import check...\"\npython -c \"from plain_sight.server import mcp; from plain_sight.engine import Florence2Engine; print('  imports OK')\"\necho \"[2/3] Tool registration check...\"\npython -c \"\nimport asyncio\nfrom plain_sight.server import mcp\ntools = asyncio.run(mcp.list_tools())\nexpected = {'describe_image', 'describe_batch', 'read_text', 'sight_status', 'sight_selftest'}\nnames = {t.name for t in tools}\nassert names == expected, f'Expected {expected}, got {names}'\nprint(f'  {len(names)} tools registered OK')\n\"\necho \"[3/3] Engine status check...\"\npython -c \"\nfrom plain_sight.engine import Florence2Engine\ne = Florence2Engine(device='cpu', dtype=None)\ns = e.status()\nassert s['model_id'], 'model_id missing'\nassert s['detail_tiers'], 'detail tiers missing'\nprint('  engine OK: model=' + s['model_id'])\n\"\n"
+        },
+        {
+          "job": "test",
+          "step": "Run edge-case tests",
+          "text": "pytest -m \"not dogfood\" -v"
+        }
+      ],
+      "elsewhere": [],
+      "file": ".github/workflows/ci.yml",
+      "landings": [],
+      "mentions": [],
+      "name": "CI",
+      "permissions": [],
+      "pushes": false,
+      "reach": [
+        {
+          "boundary": "src",
+          "depth": 0,
+          "files": 5
+        },
+        {
+          "boundary": "tests",
+          "depth": 0,
+          "files": 3
+        }
+      ],
+      "readers": [],
+      "runs": [
+        {
+          "job": "test",
+          "path": "src/plain_sight/engine.py",
+          "runKind": "executes"
+        },
+        {
+          "job": "test",
+          "path": "src/plain_sight/server.py",
+          "runKind": "executes"
+        },
+        {
+          "directory": true,
+          "job": "test",
+          "matched": true,
+          "path": "tests/",
+          "runKind": "executes",
+          "via": "pytest pyproject.toml"
+        }
+      ],
+      "runsCount": 3,
+      "secrets": [],
+      "sends": {
+        "deploysPages": false,
+        "dispatchesTo": [],
+        "opensIssues": false,
+        "opensIssuesOnFailure": false,
+        "opensPullRequests": false,
+        "publishes": false,
+        "publishesTo": [],
+        "releases": false
+      },
+      "stages": [],
+      "triggers": [
+        {
+          "event": "pull_request",
+          "paths": [
+            ".github/workflows/**",
+            "atlas/**",
+            "pyproject.toml",
+            "site/astro.config.mjs",
+            "site/package-lock.json",
+            "site/package.json",
+            "src/**",
+            "tests/**"
+          ]
+        },
+        {
+          "event": "push",
+          "paths": [
+            ".github/workflows/**",
+            "atlas/**",
+            "pyproject.toml",
+            "site/astro.config.mjs",
+            "site/package-lock.json",
+            "site/package.json",
+            "src/**",
+            "tests/**"
+          ]
+        },
+        {
+          "event": "workflow_dispatch"
+        }
+      ],
+      "uses": [
+        "actions/checkout",
+        "actions/setup-node",
+        "actions/setup-python"
+      ],
+      "usesWorkflowToken": false
+    },
+    {
+      "checksCount": 0,
+      "commands": [
+        {
+          "job": "build",
+          "step": "Install site dependencies",
+          "text": "npm ci"
+        },
+        {
+          "job": "build",
+          "step": "Build site",
+          "text": "npm run build"
+        }
+      ],
+      "elsewhere": [],
+      "file": ".github/workflows/pages.yml",
+      "landings": [],
+      "mentions": [],
+      "name": "Deploy site to GitHub Pages",
+      "permissions": [
+        "contents:read",
+        "id-token:write",
+        "pages:write"
+      ],
+      "pushes": false,
+      "reach": [
+        {
+          "boundary": "site",
+          "depth": 0,
+          "files": 3
+        }
+      ],
+      "readers": [],
+      "runs": [
+        {
+          "job": "build",
+          "matched": true,
+          "path": "site/astro.config.mjs",
+          "runKind": "executes",
+          "via": "astro build"
+        },
+        {
+          "directory": true,
+          "job": "build",
+          "matched": true,
+          "path": "site/src/",
+          "runKind": "executes",
+          "via": "astro build"
+        }
+      ],
+      "runsCount": 2,
+      "secrets": [],
+      "sends": {
+        "deploysPages": true,
+        "dispatchesTo": [],
+        "opensIssues": false,
+        "opensIssuesOnFailure": false,
+        "opensPullRequests": false,
+        "publishes": false,
+        "publishesTo": [],
+        "releases": false
+      },
+      "stages": [],
+      "triggers": [
+        {
+          "branches": [
+            "main"
+          ],
+          "event": "push",
+          "paths": [
+            ".github/workflows/pages.yml",
+            "site/**"
+          ]
+        },
+        {
+          "event": "workflow_dispatch"
+        }
+      ],
+      "uses": [
+        "actions/checkout",
+        "actions/deploy-pages",
+        "actions/setup-node",
+        "actions/upload-pages-artifact"
+      ],
+      "usesWorkflowToken": false
+    },
+    {
+      "checksCount": 0,
+      "commands": [],
+      "elsewhere": [],
+      "file": "pyproject.toml",
+      "kind": "command",
+      "landings": [],
+      "mentions": [],
+      "name": "plain-sight",
+      "permissions": [],
+      "pushes": false,
+      "reach": [
+        {
+          "boundary": "src",
+          "depth": 0,
+          "files": 4
+        }
+      ],
+      "readers": [],
+      "runs": [
+        {
+          "path": "src/plain_sight/cli.py",
+          "runKind": "executes"
+        }
+      ],
+      "runsCount": 1,
+      "secrets": [],
+      "sends": {
+        "deploysPages": false,
+        "dispatchesTo": [],
+        "opensIssues": false,
+        "opensIssuesOnFailure": false,
+        "opensPullRequests": false,
+        "publishes": false,
+        "publishesTo": [],
+        "releases": false
+      },
+      "stages": [],
+      "triggers": [],
+      "uses": [],
+      "usesWorkflowToken": false
+    },
+    {
+      "checksCount": 0,
+      "commands": [],
+      "elsewhere": [],
+      "file": "pyproject.toml",
+      "kind": "command",
+      "landings": [],
+      "mentions": [],
+      "name": "plain-sight-mcp",
+      "permissions": [],
+      "pushes": false,
+      "reach": [
+        {
+          "boundary": "src",
+          "depth": 0,
+          "files": 4
+        }
+      ],
+      "readers": [],
+      "runs": [
+        {
+          "path": "src/plain_sight/server.py",
+          "runKind": "executes"
+        }
+      ],
+      "runsCount": 1,
+      "secrets": [],
+      "sends": {
+        "deploysPages": false,
+        "dispatchesTo": [],
+        "opensIssues": false,
+        "opensIssuesOnFailure": false,
+        "opensPullRequests": false,
+        "publishes": false,
+        "publishesTo": [],
+        "releases": false
+      },
+      "stages": [],
+      "triggers": [],
+      "uses": [],
+      "usesWorkflowToken": false
+    }
+  ],
+  "edges": [
+    {
+      "from": "tests",
+      "fromTests": true,
+      "kind": "file",
+      "to": "src"
+    }
+  ],
+  "generatedFrom": {
+    "commit": "953ac4e250c0372285999118b6ef5e51fb67786c",
+    "tracked": 45
+  },
+  "landings": [
+    {
+      "readers": [
+        {
+          "by": "tests/test_edge_cases.py",
+          "call": "open",
+          "confidence": "ast",
+          "fromTests": true
+        }
+      ],
+      "target": ".gitignore",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
+          "by": "pyproject.toml",
+          "call": "configuration",
+          "confidence": "config"
+        }
+      ],
+      "target": "README.md",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
+          "by": "site/astro.config.mjs",
+          "call": "content-collection",
+          "confidence": "ast"
+        }
+      ],
+      "target": "site/src/content/docs",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
+          "by": "site/astro.config.mjs",
+          "call": "autogenerate",
+          "confidence": "ast"
+        }
+      ],
+      "target": "site/src/content/docs/handbook",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
+          "by": "pyproject.toml",
+          "call": "configuration",
+          "confidence": "config"
+        }
+      ],
+      "target": "src/plain_sight",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
+          "by": "src/plain_sight/engine.py",
+          "call": "literal",
+          "confidence": "ast"
+        }
+      ],
+      "target": "src/plain_sight/assets/selftest",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
+          "by": "src/plain_sight/engine.py",
+          "call": "literal",
+          "confidence": "ast"
+        }
+      ],
+      "target": "src/plain_sight/assets/selftest/cheetah.jpg",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
+          "by": "src/plain_sight/engine.py",
+          "call": "literal",
+          "confidence": "ast"
+        }
+      ],
+      "target": "src/plain_sight/assets/selftest/knight.png",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
+          "by": "tests/test_edge_cases.py",
+          "call": "open",
+          "confidence": "ast",
+          "fromTests": true
+        }
+      ],
+      "target": "src/plain_sight/cli.py",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
+          "by": "tests/test_edge_cases.py",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        }
+      ],
+      "target": "tests/test_edge_cases.py",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
+          "by": "tests/test_edge_cases.py",
+          "call": "open",
+          "confidence": "ast",
+          "fromTests": true
+        }
+      ],
+      "target": "verify.sh",
+      "writers": []
+    }
+  ],
+  "overlaps": [],
+  "submodules": [],
+  "symlinks": [],
+  "testFiles": 3,
+  "unassigned": []
+}

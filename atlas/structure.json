@@ -9,7 +9,7 @@
       "externals": 0,
       "files": [
         {
-          "hash": "f34297b9b4b0da59a44b72e72e08d9f9561d7c78a1db218be0ff8141d027f58f",
+          "hash": "e120d5862937c309ede14deeae8461aa044d8a688946f62a1e4efaeaee656155",
           "path": ".github/workflows/ci.yml"
         },
         {
@@ -92,7 +92,11 @@
           "path": "SHIP_GATE.md"
         },
         {
-          "hash": "ac81a6daf605967d22fcae889738c8009359c956a67ac37add84e9aab6b668a7",
+          "hash": "59ca3f6a5be96b80fee73bebf2b778211208d17cd3fb82e2134608dff0729c76",
+          "path": "codecov.yml"
+        },
+        {
+          "hash": "8796222de0776277ec3cdfe1760b66860145d2d51f765b9cbdf5da65d21be58f",
           "path": "pyproject.toml"
         },
         {
@@ -165,6 +169,14 @@
         },
         {
           "hash": "391533713539035d3c92282579d43de0f137067867fdb502d7eaea3c74601d2a",
+          "importOrder": [
+            "site/src/styles/global.css",
+            "site/src/site-config.ts"
+          ],
+          "importsFiles": [
+            "site/src/site-config.ts",
+            "site/src/styles/global.css"
+          ],
           "path": "site/src/pages/index.astro"
         },
         {
@@ -199,7 +211,7 @@
       "dynamicReads": 1,
       "dynamicSpawns": 0,
       "dynamicSpawnsInTests": 0,
-      "dynamicWrites": 2,
+      "dynamicWrites": 0,
       "entryPoints": [
         "src/plain_sight/cli.py",
         "src/plain_sight/server.py"
@@ -207,6 +219,7 @@
       "externals": 0,
       "files": [
         {
+          "constantOnly": true,
           "hash": "5a1e2d9ac55b9de1655a57aecdce8fb48776b5ee601aba5311572eb252c3cd8e",
           "path": "src/plain_sight/__init__.py"
         },
@@ -231,6 +244,33 @@
           "exports": [
             "build_parser",
             "main"
+          ],
+          "failurePaths": [
+            {
+              "in": "_cmd_batch",
+              "kind": "except",
+              "line": 301
+            },
+            {
+              "in": "main",
+              "kind": "except",
+              "line": 382
+            },
+            {
+              "in": "main",
+              "kind": "except",
+              "line": 385
+            },
+            {
+              "in": "main",
+              "kind": "except",
+              "line": 388
+            },
+            {
+              "in": "main",
+              "kind": "except",
+              "line": 395
+            }
           ],
           "hash": "af1119a2c9190ddd7711d22b3f37ecdcd07947fddd552d364402d814a782e940",
           "importsFiles": [
@@ -606,6 +646,86 @@
           "exports": [
             "configure_logging"
           ],
+          "failurePaths": [
+            {
+              "kind": "except",
+              "line": 98
+            },
+            {
+              "kind": "except",
+              "line": 107
+            },
+            {
+              "in": "_ensure_loaded",
+              "kind": "except",
+              "line": 197
+            },
+            {
+              "in": "_ensure_loaded",
+              "kind": "except",
+              "line": 202
+            },
+            {
+              "in": "_ensure_loaded",
+              "kind": "raise",
+              "line": 203
+            },
+            {
+              "in": "_ensure_loaded",
+              "kind": "except",
+              "line": 220
+            },
+            {
+              "in": "_ensure_loaded",
+              "kind": "raise",
+              "line": 235
+            },
+            {
+              "in": "_validate_detail",
+              "kind": "raise",
+              "line": 251
+            },
+            {
+              "in": "_validate_max_new_tokens",
+              "kind": "raise",
+              "line": 262
+            },
+            {
+              "in": "_validate_max_new_tokens",
+              "kind": "raise",
+              "line": 264
+            },
+            {
+              "in": "_validate_image_path",
+              "kind": "raise",
+              "line": 274
+            },
+            {
+              "in": "_validate_image_path",
+              "kind": "raise",
+              "line": 276
+            },
+            {
+              "in": "_open_image",
+              "kind": "except",
+              "line": 284
+            },
+            {
+              "in": "_open_image",
+              "kind": "raise",
+              "line": 285
+            },
+            {
+              "in": "_open_image",
+              "kind": "except",
+              "line": 286
+            },
+            {
+              "in": "_open_image",
+              "kind": "raise",
+              "line": 287
+            }
+          ],
           "hash": "844e262d4811511be03649d4abb87fb788cec3ec26064d75f15d485625083df1",
           "importsFiles": [
             "src/plain_sight/__init__.py"
@@ -622,6 +742,127 @@
             "read_text",
             "sight_selftest",
             "sight_status"
+          ],
+          "failurePaths": [
+            {
+              "kind": "except",
+              "line": 83
+            },
+            {
+              "in": "_ensure_model",
+              "kind": "raise",
+              "line": 121
+            },
+            {
+              "in": "_ensure_model",
+              "kind": "except",
+              "line": 128
+            },
+            {
+              "in": "_ensure_model",
+              "kind": "raise",
+              "line": 129
+            },
+            {
+              "in": "describe_image",
+              "kind": "except",
+              "line": 159
+            },
+            {
+              "in": "describe_image",
+              "kind": "raise",
+              "line": 160
+            },
+            {
+              "in": "describe_image",
+              "kind": "except",
+              "line": 164
+            },
+            {
+              "in": "describe_image",
+              "kind": "raise",
+              "line": 165
+            },
+            {
+              "in": "describe_batch",
+              "kind": "raise",
+              "line": 201
+            },
+            {
+              "in": "describe_batch",
+              "kind": "raise",
+              "line": 203
+            },
+            {
+              "in": "describe_batch",
+              "kind": "except",
+              "line": 208
+            },
+            {
+              "in": "describe_batch",
+              "kind": "raise",
+              "line": 209
+            },
+            {
+              "in": "describe_batch",
+              "kind": "raise",
+              "line": 234
+            },
+            {
+              "in": "describe_batch",
+              "kind": "raise",
+              "line": 240
+            },
+            {
+              "in": "describe_batch",
+              "kind": "except",
+              "line": 273
+            },
+            {
+              "in": "describe_batch",
+              "kind": "except",
+              "line": 276
+            },
+            {
+              "in": "describe_batch",
+              "kind": "except",
+              "line": 280
+            },
+            {
+              "in": "describe_batch",
+              "kind": "except",
+              "line": 288
+            },
+            {
+              "in": "read_text",
+              "kind": "except",
+              "line": 349
+            },
+            {
+              "in": "read_text",
+              "kind": "raise",
+              "line": 350
+            },
+            {
+              "in": "read_text",
+              "kind": "except",
+              "line": 354
+            },
+            {
+              "in": "read_text",
+              "kind": "raise",
+              "line": 355
+            },
+            {
+              "in": "sight_selftest",
+              "kind": "except",
+              "line": 404
+            },
+            {
+              "in": "sight_selftest",
+              "kind": "raise",
+              "line": 405
+            }
           ],
           "hash": "52ce0f9f1a8e3752fd38a9c6e81995ea60875401cda9564ba1a44df21d8bb635",
           "importsFiles": [
@@ -903,9 +1144,44 @@
             "write_batch_manifest",
             "write_sidecar_atomic"
           ],
+          "failurePaths": [
+            {
+              "in": "sidecar_is_complete",
+              "kind": "except",
+              "line": 51
+            },
+            {
+              "in": "write_sidecar_atomic",
+              "kind": "except",
+              "line": 67
+            },
+            {
+              "in": "write_sidecar_atomic",
+              "kind": "except",
+              "line": 70
+            },
+            {
+              "in": "write_sidecar_atomic",
+              "kind": "raise",
+              "line": 72
+            },
+            {
+              "in": "iter_image_files",
+              "kind": "raise",
+              "line": 127
+            },
+            {
+              "in": "iter_image_files",
+              "kind": "raise",
+              "line": 140
+            }
+          ],
           "hash": "e633e1bcadf88f6cf1c1a54cd95607871292122d4e950fda76f76f892362bb0a",
           "path": "src/plain_sight/sidecars.py"
         }
+      ],
+      "frameworks": [
+        "mcp"
       ],
       "globs": [
         "src/**"
@@ -913,6 +1189,17 @@
       "importConfidence": "full",
       "name": "src",
       "origin": "authored",
+      "outsidePlaces": [
+        {
+          "reads": 2,
+          "where": [
+            "caller"
+          ],
+          "writes": 2
+        }
+      ],
+      "outsideReads": 2,
+      "outsideWrites": 2,
       "role": "code",
       "testedBy": 3,
       "unresolvedSites": 0
@@ -938,14 +1225,16 @@
           "importsFiles": [
             "src/plain_sight/engine.py"
           ],
-          "path": "tests/conftest.py"
+          "path": "tests/conftest.py",
+          "testFramework": "pytest"
         },
         {
           "hash": "2f318c42450044326f2d9eecae6d4c9c6099cc21d1fe9db63880c2be337d69c5",
           "importsFiles": [
             "src/plain_sight/sidecars.py"
           ],
-          "path": "tests/test_dogfood.py"
+          "path": "tests/test_dogfood.py",
+          "testFramework": "pytest"
         },
         {
           "exports": [
@@ -966,7 +1255,8 @@
             "src/plain_sight/sidecars.py",
             "tests/conftest.py"
           ],
-          "path": "tests/test_edge_cases.py"
+          "path": "tests/test_edge_cases.py",
+          "testFramework": "pytest"
         }
       ],
       "globs": [
@@ -985,48 +1275,121 @@
       "checksCount": 0,
       "commands": [
         {
+          "dir": "",
           "job": "test",
-          "step": "Atlas check",
-          "text": "npx --yes @dogfood-lab/atlas@1.21.0 check"
+          "programs": [
+            "npx"
+          ],
+          "step": "Atlas check"
         },
         {
+          "dir": "",
           "job": "test",
-          "step": "Install dependencies",
-          "text": "pip install -e \".[dev]\""
+          "programs": [
+            "pip"
+          ],
+          "step": "Install dependencies"
         },
         {
+          "dir": "",
           "job": "test",
-          "step": "Dependency scan (advisory)",
-          "text": "pip install pip-audit\npip-audit\n"
+          "programs": [
+            "pip",
+            "pip-audit"
+          ],
+          "step": "Dependency scan (advisory)"
         },
         {
+          "dir": "",
           "job": "test",
-          "step": "Verify imports and tool registration",
-          "text": "echo \"[1/3] Import check...\"\npython -c \"from plain_sight.server import mcp; from plain_sight.engine import Florence2Engine; print('  imports OK')\"\necho \"[2/3] Tool registration check...\"\npython -c \"\nimport asyncio\nfrom plain_sight.server import mcp\ntools = asyncio.run(mcp.list_tools())\nexpected = {'describe_image', 'describe_batch', 'read_text', 'sight_status', 'sight_selftest'}\nnames = {t.name for t in tools}\nassert names == expected, f'Expected {expected}, got {names}'\nprint(f'  {len(names)} tools registered OK')\n\"\necho \"[3/3] Engine status check...\"\npython -c \"\nfrom plain_sight.engine import Florence2Engine\ne = Florence2Engine(device='cpu', dtype=None)\ns = e.status()\nassert s['model_id'], 'model_id missing'\nassert s['detail_tiers'], 'detail tiers missing'\nprint('  engine OK: model=' + s['model_id'])\n\"\n"
+          "programs": [
+            "echo",
+            "python"
+          ],
+          "step": "Verify imports and tool registration"
         },
         {
+          "dir": "",
           "job": "test",
-          "step": "Run edge-case tests",
-          "text": "pytest -m \"not dogfood\" -v"
+          "programs": [
+            "pytest"
+          ],
+          "step": "Run edge-case tests"
         }
       ],
       "elsewhere": [],
       "file": ".github/workflows/ci.yml",
+      "jobs": [
+        {
+          "basis": "declared",
+          "name": "test",
+          "runsOn": [
+            {
+              "labels": [
+                "ubuntu-latest"
+              ],
+              "platform": {
+                "cpu": "x64",
+                "libc": "glibc",
+                "os": "linux"
+              }
+            }
+          ],
+          "setup": [
+            {
+              "ranges": [
+                {
+                  "from": "3.12",
+                  "range": ">=3.12.0 <3.13.0-0"
+                }
+              ],
+              "step": "1",
+              "uses": "actions/setup-python",
+              "version": "3.12"
+            },
+            {
+              "ranges": [
+                {
+                  "from": "22",
+                  "range": ">=22.0.0 <23.0.0-0"
+                }
+              ],
+              "step": "Set up Node for Atlas",
+              "uses": "actions/setup-node",
+              "version": "22"
+            }
+          ]
+        },
+        {
+          "basis": "declared",
+          "name": "codecov",
+          "runsOn": [
+            {
+              "labels": [
+                "ubuntu-latest"
+              ],
+              "platform": {
+                "cpu": "x64",
+                "libc": "glibc",
+                "os": "linux"
+              }
+            }
+          ]
+        }
+      ],
       "landings": [],
       "mentions": [],
       "name": "CI",
-      "permissions": [],
+      "permissions": [
+        "contents:read",
+        "id-token:write"
+      ],
       "pushes": false,
       "reach": [
         {
           "boundary": "src",
           "depth": 0,
-          "files": 5
-        },
-        {
-          "boundary": "tests",
-          "depth": 0,
-          "files": 3
+          "files": 4
         }
       ],
       "readers": [],
@@ -1040,17 +1403,9 @@
           "job": "test",
           "path": "src/plain_sight/server.py",
           "runKind": "executes"
-        },
-        {
-          "directory": true,
-          "job": "test",
-          "matched": true,
-          "path": "tests/",
-          "runKind": "executes",
-          "via": "pytest pyproject.toml"
         }
       ],
-      "runsCount": 3,
+      "runsCount": 2,
       "secrets": [],
       "sends": {
         "deploysPages": false,
@@ -1063,12 +1418,23 @@
         "releases": false
       },
       "stages": [],
+      "tests": [
+        {
+          "config": "pyproject.toml",
+          "files": 0,
+          "job": "test",
+          "junit": true,
+          "runner": "pytest",
+          "step": "Run edge-case tests"
+        }
+      ],
       "triggers": [
         {
           "event": "pull_request",
           "paths": [
             ".github/workflows/**",
             "atlas/**",
+            "codecov.yml",
             "pyproject.toml",
             "site/astro.config.mjs",
             "site/package-lock.json",
@@ -1082,6 +1448,7 @@
           "paths": [
             ".github/workflows/**",
             "atlas/**",
+            "codecov.yml",
             "pyproject.toml",
             "site/astro.config.mjs",
             "site/package-lock.json",
@@ -1096,8 +1463,11 @@
       ],
       "uses": [
         "actions/checkout",
+        "actions/download-artifact",
         "actions/setup-node",
-        "actions/setup-python"
+        "actions/setup-python",
+        "actions/upload-artifact",
+        "codecov/codecov-action"
       ],
       "usesWorkflowToken": false
     },
@@ -1105,18 +1475,74 @@
       "checksCount": 0,
       "commands": [
         {
+          "dir": "site",
           "job": "build",
-          "step": "Install site dependencies",
-          "text": "npm ci"
+          "programs": [
+            "npm"
+          ],
+          "step": "Install site dependencies"
         },
         {
+          "dir": "site",
           "job": "build",
-          "step": "Build site",
-          "text": "npm run build"
+          "programs": [
+            "npm"
+          ],
+          "step": "Build site"
         }
       ],
       "elsewhere": [],
       "file": ".github/workflows/pages.yml",
+      "jobs": [
+        {
+          "basis": "declared",
+          "name": "build",
+          "runsOn": [
+            {
+              "labels": [
+                "ubuntu-latest"
+              ],
+              "platform": {
+                "cpu": "x64",
+                "libc": "glibc",
+                "os": "linux"
+              }
+            }
+          ],
+          "setup": [
+            {
+              "ranges": [
+                {
+                  "from": "22",
+                  "range": ">=22.0.0 <23.0.0-0"
+                }
+              ],
+              "step": "1",
+              "uses": "actions/setup-node",
+              "version": "22"
+            }
+          ]
+        },
+        {
+          "basis": "declared",
+          "environment": {
+            "name": "github-pages"
+          },
+          "name": "deploy",
+          "runsOn": [
+            {
+              "labels": [
+                "ubuntu-latest"
+              ],
+              "platform": {
+                "cpu": "x64",
+                "libc": "glibc",
+                "os": "linux"
+              }
+            }
+          ]
+        }
+      ],
       "landings": [],
       "mentions": [],
       "name": "Deploy site to GitHub Pages",
@@ -1130,7 +1556,7 @@
         {
           "boundary": "site",
           "depth": 0,
-          "files": 3
+          "files": 5
         }
       ],
       "readers": [],
@@ -1280,9 +1706,10 @@
       "to": "src"
     }
   ],
+  "engine": "1.24.0",
   "generatedFrom": {
-    "commit": "953ac4e250c0372285999118b6ef5e51fb67786c",
-    "tracked": 45
+    "commit": "cf9b6eb4108561e4d9558c6a583f04556e72d607",
+    "tracked": 46
   },
   "landings": [
     {
@@ -1415,5 +1842,9 @@
   "submodules": [],
   "symlinks": [],
   "testFiles": 3,
+  "testsNotRun": [
+    "tests/test_dogfood.py",
+    "tests/test_edge_cases.py"
+  ],
   "unassigned": []
 }

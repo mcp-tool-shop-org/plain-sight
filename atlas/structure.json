@@ -9,7 +9,7 @@
       "externals": 0,
       "files": [
         {
-          "hash": "e120d5862937c309ede14deeae8461aa044d8a688946f62a1e4efaeaee656155",
+          "hash": "35f8dde9408b604abf4ae39f4e38a86209fd499644072e63c6f5ea51b3b279fa",
           "path": ".github/workflows/ci.yml"
         },
         {
@@ -127,7 +127,7 @@
           "path": "site/astro.config.mjs"
         },
         {
-          "hash": "af5d4f54dca60686724d306eb58759fb25b6f5ba4d66559ab84a968112a184e5",
+          "hash": "0607a19c4f60b635244a906c7ad2424359b50e20c4a83bc140f202abce4a941e",
           "path": "site/package-lock.json"
         },
         {
@@ -1201,6 +1201,9 @@
       "outsideReads": 2,
       "outsideWrites": 2,
       "role": "code",
+      "testRunners": [
+        "pytest"
+      ],
       "testedBy": 3,
       "unresolvedSites": 0
     },
@@ -1266,6 +1269,9 @@
       "name": "tests",
       "origin": "authored",
       "role": "test",
+      "testRunners": [
+        "pytest"
+      ],
       "testedBy": 0,
       "unresolvedSites": 0
     }
@@ -1389,7 +1395,12 @@
         {
           "boundary": "src",
           "depth": 0,
-          "files": 4
+          "files": 5
+        },
+        {
+          "boundary": "tests",
+          "depth": 0,
+          "files": 3
         }
       ],
       "readers": [],
@@ -1403,9 +1414,17 @@
           "job": "test",
           "path": "src/plain_sight/server.py",
           "runKind": "executes"
+        },
+        {
+          "directory": true,
+          "job": "test",
+          "matched": true,
+          "path": "tests/",
+          "runKind": "executes",
+          "via": "pytest pyproject.toml"
         }
       ],
-      "runsCount": 2,
+      "runsCount": 3,
       "secrets": [],
       "sends": {
         "deploysPages": false,
@@ -1421,7 +1440,7 @@
       "tests": [
         {
           "config": "pyproject.toml",
-          "files": 0,
+          "files": 3,
           "job": "test",
           "junit": true,
           "runner": "pytest",
@@ -1459,6 +1478,13 @@
         },
         {
           "event": "workflow_dispatch"
+        }
+      ],
+      "unresolvedExpressions": [
+        {
+          "adds": "flags",
+          "job": "test",
+          "step": "Run edge-case tests"
         }
       ],
       "uses": [
@@ -1706,9 +1732,9 @@
       "to": "src"
     }
   ],
-  "engine": "1.24.0",
+  "engine": "1.26.0",
   "generatedFrom": {
-    "commit": "cf9b6eb4108561e4d9558c6a583f04556e72d607",
+    "commit": "67b4009d2b2c4bd4ebf6410f52af83ce46cabc45",
     "tracked": 46
   },
   "landings": [
@@ -1842,9 +1868,5 @@
   "submodules": [],
   "symlinks": [],
   "testFiles": 3,
-  "testsNotRun": [
-    "tests/test_dogfood.py",
-    "tests/test_edge_cases.py"
-  ],
   "unassigned": []
 }

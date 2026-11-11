@@ -18,7 +18,7 @@
   ],
   "changes": {
     "fileCounts": {
-      "added": 1,
+      "added": 0,
       "changed": 2,
       "moved": 0,
       "parts": 2,
@@ -27,21 +27,7 @@
     "items": [
       {
         "kind": "door",
-        "sentence": "CI's pull request trigger now also names `codecov.yml`.",
-        "subjects": [
-          ".github/workflows/ci.yml"
-        ]
-      },
-      {
-        "kind": "door",
-        "sentence": "CI's push trigger now also names `codecov.yml`.",
-        "subjects": [
-          ".github/workflows/ci.yml"
-        ]
-      },
-      {
-        "kind": "door",
-        "sentence": "CI no longer runs tests/.",
+        "sentence": "CI now also runs tests/.",
         "subjects": [
           ".github/workflows/ci.yml",
           "tests/"
@@ -49,24 +35,24 @@
       },
       {
         "kind": "counts",
-        "sentence": "1 file added and 2 changed content, across 2 parts.",
+        "sentence": "2 files changed content, across 2 parts.",
         "subjects": []
       }
     ],
     "since": {
-      "commit": "953ac4e250c0372285999118b6ef5e51fb67786c",
-      "generatedAt": "2026-09-25T09:43:26.784Z"
+      "commit": "cf9b6eb4108561e4d9558c6a583f04556e72d607",
+      "generatedAt": "2026-09-30T20:11:17.896Z"
     },
     "unchanged": false
   },
   "changesTogether": [],
   "changesTogetherNote": [
-    "Window: 180 days; a pair counts from 3 shared commits, since the window holds fewer than 30 qualifying commits."
+    "Window: 180 days; a pair counts from 3 shared commits, since 0 source files reach 10 revisions; the floor rises to 10 when 25 do."
   ],
   "changesTogetherWithTests": 0,
-  "commit": "cf9b6eb4108561e4d9558c6a583f04556e72d607",
+  "commit": "67b4009d2b2c4bd4ebf6410f52af83ce46cabc45",
   "defaultBranch": "main",
-  "derived": "5 parts, mostly Python (9 files), CSS (2), TypeScript (2), Astro (1), JavaScript (1) and shell (1). Work enters through 4 doors; CI, Deploy site to GitHub Pages, plain-sight and plain-sight-mcp each reach 1 part, and CI is followed because a pull request goes through it. It deploys a site to GitHub Pages. People run plain-sight and plain-sight-mcp.",
+  "derived": "5 parts, mostly Python (9 files), CSS (2), TypeScript (2), Astro (1), JavaScript (1) and shell (1). Work enters through 4 doors; the busiest is CI, which reaches 2 parts. It deploys a site to GitHub Pages. People run plain-sight and plain-sight-mcp.",
   "doors": [
     {
       "checks": [],
@@ -81,14 +67,20 @@
         {
           "boundary": "src",
           "depth": 0,
-          "files": 4
+          "files": 5
+        },
+        {
+          "boundary": "tests",
+          "depth": 0,
+          "files": 3
         }
       ],
       "runs": [
         "src/plain_sight/engine.py",
-        "src/plain_sight/server.py"
+        "src/plain_sight/server.py",
+        "tests/"
       ],
-      "runsCount": 2,
+      "runsCount": 3,
       "runsMore": 0,
       "sends": [
         "uploads coverage to Codecov"
@@ -188,13 +180,13 @@
   "duplicatesLead": null,
   "duplicatesNote": [],
   "edges": [],
-  "engine": "1.24.0",
+  "engine": "1.26.0",
   "generated": [],
-  "generatedAt": "2026-09-30T20:11:17.896Z",
+  "generatedAt": "2026-11-11T22:27:18.950Z",
   "limits": [
     "1 read uses a path built at run time and is not named here.",
     "2 writes and 2 reads go to a path their caller passes, not to this repository.",
-    "Statistics confidence is low: fewer than 30 qualifying commits in the window, and fewer than 25 source files reach 10 revisions."
+    "Statistics confidence is low: fewer than 25 source files reach 10 revisions in the window."
   ],
   "mainDoor": ".github/workflows/ci.yml",
   "partLabels": {
@@ -220,13 +212,13 @@
   "testedBy": {
     "src": 3
   },
+  "testedCodeParts": 1,
   "unnamedWrites": 0,
   "unread": [],
   "unreadFiles": 0,
   "unreadNote": [],
   "untested": [],
   "untestedNote": [
-    "2 test files run in no workflow: tests/test_dogfood.py and tests/test_edge_cases.py.",
     "verify.sh runs in no workflow."
   ],
   "written": 0
